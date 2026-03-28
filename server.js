@@ -3,7 +3,8 @@ const cors = require('cors');
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
 app.post('/api/claude', async (req, res) => {
   try {
@@ -18,15 +19,12 @@ app.post('/api/claude', async (req, res) => {
     });
     const text = await response.text();
     console.log('API response status:', response.status);
-    console.log('API response:', text.substring(0, 200));
     res.status(response.status).set('Content-Type', 'application/json').send(text);
   } catch (err) {
     console.error('Error:', err);
     res.status(500).json({ error: err.message });
   }
 });
-
-app.use(express.static('.'));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
