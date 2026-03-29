@@ -1,0 +1,2052 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="契約・看護記録Ⅰ">
+<title>契約・看護記録Ⅰアプリ</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+* { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+body { margin: 0; padding: 0; background: #e2e8f0; overscroll-behavior: none; }
+input, textarea, select { font-size: 16px !important; background: white !important; color: #1e293b !important; }
+input::placeholder, textarea::placeholder { color: #94a3b8 !important; }
+button { cursor: pointer; }
+canvas { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; background: #f1f5f9; }
+select { -webkit-appearance: none; appearance: none; background: white !important; }
+@keyframes splashPulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.05);opacity:0.9} }
+@keyframes splashBar { 0%{width:40px} 50%{width:80px} 100%{width:40px} }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div id="splash" style="position:fixed;inset:0;background:#e2e8f0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;z-index:9999;transition:opacity 0.6s;">
+  <img src="data:image/png;base64,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" style="width:100px;height:100px;border-radius:24px;object-fit:cover;box-shadow:0 8px 24px rgba(0,0,0,0.15);animation:splashPulse 1.2s ease-in-out infinite;" />
+  <div style="text-align:center;">
+    <p style="font-size:11px;color:#64748b;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 4px;">ひなた</p>
+    <h1 style="font-size:20px;font-weight:700;color:#1e293b;margin:0;">契約・看護記録Ⅰアプリ</h1>
+  </div>
+  <div style="width:40px;height:3px;background:linear-gradient(to right,#0d9488,#10b981);border-radius:2px;animation:splashBar 1.5s ease-in-out infinite;"></div>
+</div>
+<script type="text/babel" data-presets="env,react">
+const { useState, useRef, useEffect, useCallback } = React;
+
+// ===== UTILS =====
+function cn(...c) { return c.filter(Boolean).join(" "); }
+
+// ===== TOAST =====
+function useToast() {
+  const [toasts, setToasts] = useState([]);
+  const add = useCallback((msg, type = "info") => {
+    const id = Date.now() + Math.random();
+    setToasts(p => [...p, { id, msg, type }]);
+    setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 4000);
+  }, []);
+  return { toasts, success: m => add(m, "success"), error: m => add(m, "error"), info: m => add(m, "info") };
+}
+function Toasts({ toasts }) {
+  return (
+    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] flex flex-col gap-2 w-[92vw] max-w-sm pointer-events-none">
+      {toasts.map(t => (
+        <div key={t.id} className={`px-4 py-3 rounded-xl text-sm font-semibold shadow-xl border pointer-events-auto ${t.type === "success" ? "bg-emerald-100 border-emerald-500 text-emerald-800" : t.type === "error" ? "bg-red-100 border-red-400 text-red-800" : "bg-white border-slate-300 text-slate-800"}`}>{t.msg}</div>
+      ))}
+    </div>
+  );
+}
+
+// ===== SHARED FACESHEET =====
+const emptyFS = () => ({
+  userName: "", nameKana: "", gender: "", age: "", birthDate: "",
+  address: "", phone: "", mobilePhone: "", mainDiagnosis: "",
+  medicalHistory: "", currentCondition: "", diseaseAwareness: "",
+  familyMembers: [], familySpecialNotes: "",
+  patientRequest: "", familyRequest: "", referralRequest: "",
+  otherServices: "", handoverNotes: "",
+  bedrideLevel: "", dementiaLevel: "",
+  relatedInstitutions: [],
+  referralSource: "", referralPhone: "",
+  familyContact: "", familyPhone: "",
+  doctorHospital: "", doctorName: "",
+  extractedAt: null,
+});
+
+// ===== SHARED UI ATOMS =====
+function FSBadge() {
+  return <span className="inline-flex items-center text-[10px] font-bold bg-teal-900/50 text-teal-700 border border-teal-300 px-1.5 py-0.5 rounded-full">✦FS</span>;
+}
+function Divider({ children }) {
+  return (
+    <div className="flex items-center gap-3 my-5">
+      <div className="h-px flex-1 bg-gradient-to-r from-transparent to-slate-600" />
+      <span className="text-xs font-bold tracking-[0.15em] text-slate-500 uppercase whitespace-nowrap">{children}</span>
+      <div className="h-px flex-1 bg-gradient-to-l from-transparent to-slate-600" />
+    </div>
+  );
+}
+function Card({ children, className = "", required = false, done = true }) {
+  const borderClass = required && !done
+    ? "border-red-400 bg-red-50"
+    : "border-slate-200";
+  return (
+    <div className={cn("bg-sky-50 rounded-2xl border border-sky-100 p-4 mb-3 shadow-sm", borderClass, className)}>
+      {children}
+    </div>
+  );
+}
+function CardLabel({ children, badge, required = false, done = true }) {
+  return (
+    <div className="flex items-center gap-2 mb-2">
+      <span className="text-xs font-bold text-slate-600 tracking-wide uppercase">{children}</span>
+      {badge && <FSBadge />}
+      {required && !done && (
+        <span className="text-[10px] font-bold text-red-700 bg-red-100 border border-red-400 px-1.5 py-0.5 rounded-full">必須</span>
+      )}
+      {required && done && (
+        <span className="text-[10px] font-bold text-emerald-700">✓</span>
+      )}
+    </div>
+  );
+}
+
+// 2-value toggle (e.g. 済/未, 有/無, 該当/非該当)
+function Toggle2({ val, opts, onChange, colors, large }) {
+  // opts: [{label, value, color?}]
+  return (
+    <div className="flex gap-2">
+      {opts.map(opt => {
+        const active = val === opt.value;
+        const colorClass = active
+          ? "bg-teal-600 border-teal-500 text-white"
+          : "bg-white border-slate-300 text-slate-600";
+        return (
+          <button key={opt.label} onClick={() => onChange(opt.value)}
+            className={`flex-1 ${large ? "py-5 text-base min-h-[60px]" : "py-4 text-base min-h-[54px]"} rounded-xl font-bold border transition-all active:scale-95 ${colorClass}`}>
+            {opt.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// Multi-option selector (for insurance type etc.)
+function ChipSelect({ val, opts, onChange, multi = false, large = false }) {
+  const toggle = v => {
+    if (multi) {
+      const arr = val || [];
+      onChange(arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v]);
+    } else {
+      onChange(val === v ? "" : v);
+    }
+  };
+  const isActive = v => multi ? (val || []).includes(v) : val === v;
+  return (
+    <div className="flex flex-wrap gap-2">
+      {opts.map(opt => (
+        <button key={opt} onClick={() => toggle(opt)}
+          className={`${large ? "flex-1 py-5 text-base min-h-[60px]" : "px-5 py-4 text-base min-h-[54px]"} rounded-xl font-bold border transition-all active:scale-95 ${isActive(opt) ? "bg-teal-600 border-teal-500 text-white" : "bg-white border-slate-300 text-slate-600"}`}>
+          {opt}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function TInput({ label, value, onChange, placeholder, type = "text", className = "", badge, voice, required = false }) {
+  const isEmpty = required && !value;
+  return (
+    <div className={cn("space-y-1", className)}>
+      {label && (
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-slate-500">{label}</label>
+          {badge && <FSBadge />}
+          {type === "date" && <span className="text-[10px] text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded">📅 カレンダー</span>}
+          {isEmpty && <span className="text-[10px] font-bold text-red-700 bg-red-100 border border-red-400 px-1.5 py-0.5 rounded-full">必須</span>}
+          {required && !!value && <span className="text-[10px] font-bold text-emerald-700">✓</span>}
+        </div>
+      )}
+      <div className="flex gap-2">
+        <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+          className={`flex-1 bg-white border rounded-xl px-4 py-3 text-slate-800 text-base placeholder-slate-400 focus:outline-none overflow-x-auto ${isEmpty ? "border-red-400 focus:border-red-400" : "border-slate-600 focus:border-teal-500"}`} />
+        {voice && <VoiceInline onText={t => onChange(value ? value + " " + t : t)} />}
+      </div>
+    </div>
+  );
+}
+function TTextarea({ label, value, onChange, placeholder, rows = 2, badge, voice, required = false }) {
+  const isEmpty = required && !value;
+  return (
+    <div className="space-y-1">
+      {label && (
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-slate-500">{label}</label>
+            {badge && <FSBadge />}
+            {isEmpty && <span className="text-[10px] font-bold text-red-700 bg-red-100 border border-red-400 px-1.5 py-0.5 rounded-full">必須</span>}
+            {required && !!value && <span className="text-[10px] font-bold text-emerald-700">✓</span>}
+          </div>
+          {value && <button type="button" onClick={() => onChange("")} className="text-[10px] text-red-600 border border-red-300 px-1.5 py-0.5 rounded active:scale-95">✕ 削除</button>}
+        </div>
+      )}
+      <div className="flex gap-2 items-start">
+        <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={rows}
+          className={`flex-1 bg-white border rounded-xl px-4 py-3 text-slate-800 text-base placeholder-slate-400 focus:outline-none resize-none ${isEmpty ? "border-red-400 focus:border-red-400" : "border-slate-600 focus:border-teal-500"}`} />
+        {voice && <VoiceInline onText={t => onChange(value ? value + "\n" + t : t)} />}
+      </div>
+    </div>
+  );
+}
+
+// Inline voice button (small)
+function VoiceInline({ onText }) {
+  const [rec, setRec] = useState(false);
+  const mrRef = useRef(); const timerRef = useRef(); const [sec, setSec] = useState(0);
+  const stop = () => { if (mrRef.current?.state !== "inactive") mrRef.current?.stop(); clearInterval(timerRef.current); };
+  const start = async () => {
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(s);
+      mrRef.current = mr;
+      const chunks = [];
+      mr.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+      mr.onstop = async () => {
+        s.getTracks().forEach(t => t.stop());
+        clearInterval(timerRef.current);
+        const blob = new Blob(chunks, { type: mr.mimeType || 'audio/webm' });
+        // Web Speech API フォールバック（テキスト変換）
+        setRec(false); setSec(0);
+        onText("（録音完了）");
+      };
+      mr.start(100); setRec(true); setSec(0);
+      timerRef.current = setInterval(() => setSec(x => x + 1), 1000);
+    } catch { alert("マイク許可が必要です"); }
+  };
+  return (
+    <button type="button" onClick={rec ? stop : start}
+      className={`flex-shrink-0 w-14 h-14 rounded-xl border flex flex-col items-center justify-center gap-0.5 text-xl transition-all active:scale-95 ${rec ? "bg-red-500 border-red-400 text-white animate-pulse" : "bg-slate-200 border-slate-300 text-slate-600"}`}>
+      <span>{rec ? "⏹" : "🎤"}</span>
+      {rec && <span className="text-[9px] font-bold">{sec}s</span>}
+    </button>
+  );
+}
+
+// Photo capture button
+function PhotoBtn({ photo, onPhoto, label = "写真", autoSelect }) {
+  const camRef = useRef();
+  const fileRef = useRef();
+  const handleFile = e => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = ev => { onPhoto(ev.target.result); if (autoSelect) autoSelect(); };
+    r.readAsDataURL(f);
+  };
+  return (
+    <div className="mt-3">
+      <div className="flex gap-2">
+        <button onClick={() => camRef.current?.click()}
+          className="flex-1 flex flex-col items-center justify-center gap-1.5 py-4 bg-amber-100 border border-amber-300 rounded-xl text-amber-700 font-bold active:scale-95 min-h-[72px]">
+          <span className="text-2xl leading-none">📷</span>
+          <span className="text-sm">{photo ? "再撮影" : "カメラ"}</span>
+        </button>
+        <button onClick={() => fileRef.current?.click()}
+          className="flex-1 flex flex-col items-center justify-center gap-1.5 py-4 bg-blue-100 border border-blue-300 rounded-xl text-blue-700 font-bold active:scale-95 min-h-[72px]">
+          <span className="text-2xl leading-none">📁</span>
+          <span className="text-sm">アップロード</span>
+        </button>
+      </div>
+      {photo && (
+        <div className="flex items-center gap-3 mt-2">
+          <img src={photo} className="w-16 h-16 rounded-xl object-cover border-2 border-emerald-500/50" />
+          <button onClick={() => onPhoto(null)} className="text-sm text-red-600 border border-red-300 px-3 py-2 rounded-xl active:scale-95">🗑 削除</button>
+        </div>
+      )}
+      <input ref={camRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFile} />
+      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+    </div>
+  );
+}
+
+// Business card scan
+function CardScanBtn({ onResult, toast }) {
+  const ref = useRef();
+  const [scanning, setScanning] = useState(false);
+  const handle = e => {
+    const f = e.target.files?.[0]; if (!f) return;
+    setScanning(true);
+    const r = new FileReader();
+    r.onload = async ev => {
+      try {
+        const data = ev.target.result.split(",")[1];
+        const res = await fetch("https://hinata-app-production.up.railway.app/api/claude", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 500, messages: [{ role: "user", content: [{ type: "image", source: { type: "base64", media_type: f.type, data } }, { type: "text", text: '名刺の画像から情報を読み取り、JSONのみ返してください。キー：{"name":"氏名","organization":"組織名","role":"役職・役割","phone":"電話番号","note":"その他情報"}' }] }] })
+        });
+        const d = await res.json();
+        const txt = d.content?.map(b => b.text || "").join("") || "";
+        const parsed = JSON.parse(txt.replace(/```json|```/g, "").trim());
+        onResult(parsed);
+        toast.success("名刺を読み取りました");
+      } catch { toast.error("名刺の読み取りに失敗しました"); }
+      finally { setScanning(false); }
+    };
+    r.readAsDataURL(f);
+  };
+  return (
+    <div>
+      <button onClick={() => ref.current?.click()} disabled={scanning}
+        className="flex flex-col items-center justify-center gap-1.5 px-6 py-4 bg-purple-100 border border-purple-300 rounded-xl text-purple-700 font-bold active:scale-95 disabled:opacity-50 min-h-[72px]">
+        <span className="text-2xl leading-none">🪪</span>
+        <span className="text-sm">{scanning ? "読み取り中…" : "名刺スキャン"}</span>
+      </button>
+      <input ref={ref} type="file" accept="image/*" capture="environment" className="hidden" onChange={handle} />
+    </div>
+  );
+}
+
+// ===== FACESHEET MODAL =====
+function FSModal({ onClose, onExtracted, toast }) {
+  const [files, setFiles] = useState([]); const [text, setText] = useState(""); const [loading, setLoading] = useState(false);
+  const fileRef = useRef(); const camRef = useRef();
+  const compressImage = (file) => new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX = 1600;
+        let w = img.width, h = img.height;
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+          else { w = Math.round(w * MAX / h); h = MAX; }
+        }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const compressed = canvas.toDataURL('image/jpeg', 0.85);
+        resolve({ name: file.name, mimeType: 'image/jpeg', data: compressed.split(',')[1], preview: compressed });
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+  const addFiles = e => Array.from(e.target.files || []).forEach(async f => {
+    if (f.type.startsWith('image/')) {
+      const compressed = await compressImage(f);
+      setFiles(p => [...p, compressed]);
+    } else {
+      const r = new FileReader();
+      r.onload = ev => setFiles(p => [...p, { name: f.name, mimeType: f.type, data: ev.target.result.split(",")[1], preview: ev.target.result }]);
+      r.readAsDataURL(f);
+    }
+  });
+  const extract = async () => {
+    if (!files.length && !text.trim()) { toast.error("写真またはテキストを入力してください"); return; }
+    setLoading(true);
+    try {
+      const content = [];
+      files.filter(f => f.mimeType?.startsWith("image/")).forEach(f => content.push({ type: "image", source: { type: "base64", media_type: f.mimeType, data: f.data } }));
+      content.push({ type: "text", text: `あなたは精神科・在宅医療に精通した訪問看護ステーションの熟練事務スタッフ兼医療記録の専門家です。訪問看護フェイスシート・情報提供書・アセスメント票・ケアプランの画像を精密に読み取ります。
+
+【チェックボックス・選択欄の読み取りルール（最重要）】
+- ✓、✔、レ点、○、●、■が付いている項目＝その内容が「該当・選択・実施あり」
+- □（空のチェックボックス）、空欄＝非該当・なし
+- チェックされた複数の項目は全て読み取り、自然な文章にまとめる
+- 例：「□介護保険 ✓自立支援 □医療保険」→「自立支援医療を利用している」
+- 例：「✓定期（週2回）□不定期」→「定期訪問（週2回）」
+- 例：「✓有□無（薬の有無）」→「内服薬あり」
+
+【医療用語・介護用語の正確な変換】
+＜疾患・症状＞
+- Alz.、アルツ → アルツハイマー型認知症
+- VaD、脳血管性認知症 → 脳血管性認知症
+- DLB → レビー小体型認知症
+- HTN、高血圧 → 高血圧症
+- DM、糖尿病 → 2型糖尿病
+- CKD → 慢性腎臓病
+- COPD → 慢性閉塞性肺疾患
+- CHF、心不全 → 慢性心不全
+- CVA、脳梗塞、脳卒中 → 脳梗塞後遺症（または脳出血後遺症）
+- OP → 骨粗鬆症
+- Ca → 癌（部位を含めて記載）
+- Fx → 骨折（部位を含めて）
+- TKA、THA → 人工膝関節置換術後、人工股関節置換術後
+- 統合失調症、精神分裂 → 統合失調症
+- うつ病、うつ状態 → うつ病（または抑うつ状態）
+- BPD → 双極性障害
+
+＜介護・福祉＞
+- 要支1/2 → 要支援1/2
+- 要介1〜5 → 要介護1〜5
+- 自立支援医療（精神）→ 精神通院医療（自立支援医療）
+- 身障手帳 → 身体障害者手帳
+- 精神手帳、精保手帳 → 精神障害者保健福祉手帳
+- 療育手帳 → 療育手帳（知的障害）
+- GH → グループホーム
+- CH → ケアハウス
+- DS、デイ → デイサービス
+- DC → デイケア（精神科デイケアまたは介護デイケア）
+- HH、ヘルパー → 訪問介護
+- 訪看 → 訪問看護
+- 往診 → 往診（定期）
+- CM → ケアマネジャー
+- PSW → 精神科ソーシャルワーカー
+- OT → 作業療法士
+- PT → 理学療法士
+- ST → 言語聴覚士
+- Dr → 医師
+
+＜薬・処方＞
+- 内服、内用薬 → 内服薬
+- 頓服 → 頓服薬（必要時）
+- 点滴、IVH → 点滴投与
+- 麻薬 → 医療用麻薬（オピオイド）
+- インスリン → インスリン自己注射
+
+＜ADL・状態＞
+- ADL自立 → 日常生活動作は自立
+- 一部介助 → 一部介助が必要
+- 全介助 → 全面的な介助が必要
+- 見守り → 見守り・声かけが必要
+- IADL → 手段的日常生活動作
+
+【その他の読み取りルール】
+- 手書き文字・かすれた文字も文脈から推測して正確に読む
+- 画像が複数ある場合は全画像の情報を統合する
+- 住所は〒番号・都道府県から番地・アパート名まで完全に記載
+- 電話番号はハイフン付きで正確に（例：0742-65-0372）
+- 生年月日はYYYY-MM-DD形式（例：1940-12-03）
+- bedrideLevel：障害老人日常生活自立度 → J1/J2/A1/A2/B1/B2/C1/C2
+- dementiaLevel：認知症日常生活自立度 → Ⅰ/Ⅱa/Ⅱb/Ⅲa/Ⅲb/Ⅳ/M
+- 家族構成図がある場合は全員を読み取る（キーパーソンは isKeyPerson: true）
+- 受診状況の表がある場合は全病院・全科を記載
+- 申し送り・特記事項は原文を忠実に転記（重要情報を省略しない）
+- 要約・省略せず記載された情報は全て含める
+
+${text ? "【補足情報】\n" + text + "\n\n" : ""}
+
+JSONのみで返してください（説明文・コードブロック・前置き一切不要）:
+{"userName":"利用者氏名（難しい漢字も正確に）","nameKana":"ふりがな（ひらがな）","gender":"男 or 女","age":"年齢（数字のみ）","birthDate":"YYYY-MM-DD","address":"〒含む完全な住所","phone":"固定電話（ハイフン付き）","mobilePhone":"携帯電話（ハイフン付き）","mainDiagnosis":"主傷病名（正式な医学用語で）","medicalHistory":"既往歴・現病歴（360字以内。チェック済み疾患・術歴・発症年含め詳細に。医療用語を正式名称で）","currentCondition":"現在の病状・治療内容・処方薬（440字以内。チェック済み項目・内服薬・受診状況を含め詳細に）","diseaseAwareness":"病識の有無・程度（280字以内）","familyMembers":[{"name":"氏名","age":"年齢","relationship":"続柄","cohabitation":"同居 or 別居","occupation":"職業","contact":"電話番号","isKeyPerson":false}],"familySpecialNotes":"家族構成の特記事項（280字以内）","patientRequest":"本人の要望・希望（273字以内）","familyRequest":"家族の要望・希望（273字以内）","referralRequest":"依頼機関からの要望（273字以内）","otherServices":"利用中の他サービス（320字以内。チェック済みサービスを全て正式名称で記載）","handoverNotes":"申し送り・特記事項（800字以内。チェック済み項目・注意事項・背景情報を詳細に）","bedrideLevel":"J1/J2/A1/A2/B1/B2/C1/C2 or 空","dementiaLevel":"Ⅰ/Ⅱa/Ⅱb/Ⅲa/Ⅲb/Ⅳ/M or 空","relatedInstitutions":[{"name":"機関名","phone":"電話番号","contact":"担当者名"}],"referralSource":"依頼元機関名","referralPhone":"依頼元電話番号","familyContact":"緊急連絡先氏名","familyPhone":"緊急連絡先固定電話","familyMobilePhone":"緊急連絡先携帯電話","doctorHospital":"主治医の病院名","doctorName":"主治医名","supporters":[{"role":"役割（正式名称）","name":"氏名","phone":"電話番号","note":"所属・備考"}]}` });
+      const res = await fetch("https://hinata-app-production.up.railway.app/api/claude", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 4000, messages: [{ role: "user", content }] }) });
+      const d = await res.json();
+      const parsed = JSON.parse(d.content?.map(b => b.text || "").join("").replace(/```json|```/g, "").trim());
+      parsed.extractedAt = new Date().toISOString();
+      onExtracted(parsed);
+      toast.success("フェイスシートを読み取り、両画面に反映しました ✦");
+      onClose();
+    } catch { toast.error("読み取りに失敗しました。画像を確認してください。"); }
+    finally { setLoading(false); }
+  };
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col bg-white">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white flex-shrink-0">
+        <div><h2 className="text-base font-bold text-slate-800">📄 フェイスシート読み取り</h2><p className="text-xs text-slate-500 mt-0.5">写真・PDF → 契約チェック＋記録書Ⅰに自動反映</p></div>
+        <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-200 text-slate-700 active:scale-95 text-lg font-bold">✕</button>
+      </div>
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+        <div className="bg-teal-50 border border-teal-300 rounded-2xl p-3">
+          <p className="text-xs text-teal-700 font-bold mb-2">✦ 読み取り後に自動反映される主な項目</p>
+          <div className="grid grid-cols-2 gap-1.5 text-xs">
+            {[["契約","利用者名のみ"],["緊急","家族・支援者・主治医"],["記録Ⅰ","全項目（氏名・病歴・ADL等）"],["記録Ⅰ","家族構成・要望・申し送り"]].map(([t,i],n)=>(
+              <div key={n} className="flex items-center gap-1.5"><span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${t==="契約"?"bg-amber-900/50 text-amber-700":t==="緊急"?"bg-pink-900/50 text-pink-700":"bg-blue-100 text-blue-800"}`}>{t}</span><span className="text-slate-500">{i}</span></div>
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <button onClick={() => camRef.current?.click()} className="flex flex-col items-center gap-3 py-10 rounded-2xl bg-amber-50 border-2 border-amber-400 text-amber-800 active:scale-[0.97]"><span className="text-5xl">📷</span><span className="text-base font-bold">カメラで撮影</span></button>
+          <button onClick={() => fileRef.current?.click()} className="flex flex-col items-center gap-3 py-10 rounded-2xl bg-teal-50 border-2 border-teal-400 text-teal-800 active:scale-[0.97]"><span className="text-5xl">📁</span><span className="text-base font-bold">ファイル選択</span></button>
+        </div>
+        <input ref={camRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={addFiles} />
+        <input ref={fileRef} type="file" accept="image/*,application/pdf" multiple className="hidden" onChange={addFiles} />
+        {files.length > 0 && (
+          <div className="flex flex-wrap gap-2">{files.map((f,i)=>(
+            <div key={i} className="relative">
+              {f.mimeType?.startsWith("image/") ? <img src={f.preview} className="w-20 h-20 rounded-xl object-cover border-2 border-teal-600/50" /> : <div className="w-20 h-20 rounded-xl bg-slate-200 border-2 border-slate-300 flex items-center justify-center text-2xl">📄</div>}
+              <button onClick={() => setFiles(p => p.filter((_,j)=>j!==i))} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center font-bold">✕</button>
+            </div>
+          ))}</div>
+        )}
+        <TTextarea label="補足テキスト（任意）" value={text} onChange={setText} placeholder="フェイスシートの内容をテキストで貼り付けることも可能です" rows={4} voice />
+      </div>
+      <div className="px-4 py-4 border-t border-slate-200 bg-white flex-shrink-0">
+        <button onClick={extract} disabled={loading || (!files.length && !text.trim())}
+          className="w-full h-20 rounded-2xl bg-gradient-to-r from-teal-600 to-emerald-500 disabled:from-slate-300 disabled:to-slate-300 disabled:text-slate-600 text-white font-bold text-lg flex items-center justify-center gap-3 shadow-lg active:scale-[0.99]">
+          {loading ? <><span className="animate-spin text-2xl">⏳</span><span>AI読み取り中…</span></> : <><span className="text-2xl">✨</span><span>AIで読み取り → 両方に反映</span></>}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ===== RECORD FORM DATA =====
+const emptyAdl = () => ({ support: "", level: "" });
+const emptyRecord = () => ({
+  name: "", nameKana: "", gender: "", age: "", birthDate: "",
+  address: "", phone: "", mobilePhone: "", firstVisitDate: "",
+  mainDiagnosis: "", stationName: "", recorder: "", recordDate: "",
+  medicalHistory: "", currentCondition: "", diseaseAwareness: "",
+  familyMembers: [], familySpecialNotes: "",
+  patientRequest: "", familyRequest: "", referralRequest: "",
+  adlEating: emptyAdl(), adlHygiene: emptyAdl(), adlToileting: emptyAdl(),
+  adlSleep: emptyAdl(), adlDailyRhythm: emptyAdl(), adlMedication: emptyAdl(),
+  adlFinance: emptyAdl(), adlDayCare: emptyAdl(), adlInterpersonal: emptyAdl(),
+  adlNurseComm: emptyAdl(),
+  bedrideLevel: "", dementiaLevel: "",
+  relatedInstitutions: [], otherServices: "", handoverNotes: "",
+});
+const BEDRIDE_OPT = ["J1","J2","A1","A2","B1","B2","C1","C2"];
+const DEMENTIA_OPT = ["Ⅰ","Ⅱa","Ⅱb","Ⅲa","Ⅲb","Ⅳ","M"];
+const BEDRIDE_DESC = { J1:"日常生活はほぼ自立。交通機関等を利用して外出する。",J2:"隣近所へなら外出する。",A1:"介助により外出し、日中はほとんどベッドから離れて生活する。",A2:"外出の頻度が少なく、日中も寝たり起きたりの生活をしている。",B1:"車いすに移乗し、食事・排泄はベッドから離れて行う。",B2:"介助により車いすに移乗する。",C1:"自力で寝返りをうつ（排泄・食事・着替えに介助要）。",C2:"自力では寝返りもうてない。" };
+const DEMENTIA_DESC = { "Ⅰ":"日常生活は家庭内及び社会的にほぼ自立している。","Ⅱa":"家庭外で日常生活に支障をきたす症状が多少見られる。","Ⅱb":"家庭内でも上記Ⅱの状態が見られる。","Ⅲa":"日中を中心として介護を必要とする症状が見られる。","Ⅲb":"夜間を中心として上記Ⅲの状態が見られる。","Ⅳ":"日常生活に支障をきたす症状が頻繁に見られ、常に介護を必要とする。","M":"著しい精神症状や重篤な身体疾患が見られ、専門医療を必要とする。" };
+
+// ===== CONTRACT DATA INIT =====
+const initContract = () => ({
+  basicInfo: { userName: "", contractDate: "", birthDate: "", phone: "", mobilePhone: "", address: "", visitAddress: "" },
+  // Top-level cards
+  visitType: "",           // 自立支援/医療保険/介護保険/自費
+  welfare: "",             // 該当/非該当
+  visitPlace: "",          // 自宅/施設/その他
+  visitPlaceOther: "",
+  team: "",                // チーム
+  staff: "",               // 担当スタッフ
+  // Check items
+  importantDoc: "未",
+  transport: "",           // 有/無
+  addition24h: "無",
+  additionMultiple: "無",
+  additionSpecial: "無",
+  additionSpecialDisease: "",
+  insuranceCard: "未",     // 有/無/不要
+  insuranceCardPhoto: null,
+  careInsurance: "未",
+  careInsurancePhoto: null,
+  burdenRatio: "未",
+  burdenRatioPhoto: null,
+  selfSupport: "未",       // 有/無
+  selfSupportPhoto: null,
+  selfSupportMode: "",     // 新規/追加
+  // 新規サブ項目
+  ssApplicant: "",
+  ssSubmitter: "",
+  ssSubmitDate: "",
+  ssSubmitterOther: "",
+  ssDocLocation: "",
+  ssDocLocationOther: "",
+  ssDiagExplain: "未",
+  ssDiagRequest: "",
+  ssDiagRequestStatus: "",
+  ssPharmacyCheck: "未",
+  ssNote: "",
+  // 追加サブ項目
+  ssAddApplicant: "",
+  ssAddSubmitter: "",
+  ssAddSubmitDate: "",
+  ssAddSubmitterOther: "",
+  ssAddDocLocation: "",
+  ssAddDocLocationOther: "",
+  ssAddNote: "",
+  limitAmount: "未",
+  limitAmountPhoto: null,
+  handbooks: [{ status: "未", photo: null }],
+  // アプラス
+  aplus: "未",   // 未/済/生活保護
+  aplusNote: "",
+  // 次回受診日（複数）
+  nextVisits: [{ hospital: "", doctor: "", date: "", undecided: false }],
+  // 処方内容
+  prescription: "未",
+  prescriptionPhoto: null,
+  prescriptionNote: "",
+  // 訪問看護指示書
+  instruction: "未",
+  instructionDest: "",
+  instructionDate: "",
+  instructionReason: "",
+  instructionDoctor: "",
+  instructionStart: "",
+  // 正式な名前の書体
+  namestyle: "",           // 必要/不必要
+  namestyleKanji: "",
+  // 注意事項
+  cautionVisitTime: false,
+  cautionTeam: false,
+  cautionStayTime: false,
+  cautionCareInsNurse: false,
+  cautionCareInsReport: false,
+  // 申し送り
+  handover: "",
+});
+
+const FAMILY_RELATIONS = ["父","母","兄弟","姉妹","長男","次男","三男","長女","次女","三女","祖父","祖母","その他"];
+
+const initEmergency = () => ({
+  familyMode: "有",
+  otherContactMode: "有",
+  family: [{ name: "", relation: "", relationOther: "", phone: "", mobilePhone: "", note: "" }],
+  otherContacts: [{ name: "", relation: "", relationOther: "", phone: "", mobilePhone: "", note: "" }],
+  doctor: { hospital: "", doctorName: "" },
+  supporters: [{ role: "", roleOther: "", name: "", phone: "", note: "" }],
+});
+
+const initOffice = () => ({
+  tasks: {
+    companion: "未",
+    userInfo: "未",
+    reportCheck: "未",
+    userTable: "未",
+    holidayTable: "未",
+    dailyReport: "未",
+    zest: "未",
+  }
+});
+
+const SUPPORTER_ROLES = ["PSW","ケアマネ","地域包括","ヘルパー","作業所（職場）","デイサービス・デイケア","その他"];
+const TEAMS = ["身体チーム","天理チーム","北部チーム","南部チーム"];
+const APPLICANTS = ["本人","家族","ひなた","その他"];
+
+// ===== CONTRACT TAB =====
+function ContractTab({ data, setData, fs, onPrescriptionPhoto, toast }) {
+  const set = (key, val) => setData(p => ({ ...p, [key]: val }));
+  const hasFS = !!fs.extractedAt;
+  const isKaigo = data.visitType === "介護保険";
+
+  // 生活保護→医療保険証不要＋アプラス「生活保護」自動
+  useEffect(() => {
+    if (data.welfare === "該当") {
+      setData(p => ({
+        ...p,
+        insuranceCard: p.insuranceCard !== "不要" ? "不要" : p.insuranceCard,
+        aplus: p.aplus !== "済" ? "生活保護" : p.aplus,
+      }));
+    }
+  }, [data.welfare]);
+
+  // 医療機関1の入力 → 指示書の依頼先・主治医に自動反映
+  const firstVisitHospital = data.nextVisits && data.nextVisits[0] ? data.nextVisits[0].hospital : "";
+  const firstVisitDoctor = data.nextVisits && data.nextVisits[0] ? data.nextVisits[0].doctor : "";
+  useEffect(() => {
+    if (!firstVisitHospital && !firstVisitDoctor) return;
+    setData(p => ({
+      ...p,
+      instructionDest: firstVisitHospital || p.instructionDest,
+      instructionDoctor: firstVisitDoctor || p.instructionDoctor,
+    }));
+  }, [firstVisitHospital, firstVisitDoctor]);
+
+  // 自立支援写真→追加自動
+  const handleSelfSupportPhoto = photo => {
+    setData(p => ({ ...p, selfSupportPhoto: photo, selfSupportMode: "追加", selfSupport: "有" }));
+  };
+
+  // 保険証系写真→有自動
+  const handleInsPhoto = (photoKey, statusKey) => photo => {
+    setData(p => ({ ...p, [photoKey]: photo, ...(photo ? { [statusKey]: "有" } : {}) }));
+  };
+
+  // 申請者連動
+  const handleApplicantChange = (val) => {
+    setData(p => ({ ...p, ssApplicant: val, ssSubmitter: val === "その他" ? p.ssSubmitter : val, ssDocLocation: val === "その他" ? p.ssDocLocation : val }));
+  };
+  const handleAddApplicantChange = (val) => {
+    setData(p => ({ ...p, ssAddApplicant: val, ssAddSubmitter: val === "その他" ? p.ssAddSubmitter : val, ssAddDocLocation: val === "その他" ? p.ssAddDocLocation : val }));
+  };
+
+  const done = (() => {
+    const bi = data.basicInfo;
+    const bools = [
+      // 基本情報
+      !!bi.userName,
+      !!bi.birthDate,
+      !!bi.address,
+      !!bi.contractDate,
+      // チェック項目
+      data.visitType !== "",
+      data.welfare !== "",
+      data.visitPlace !== "",
+      data.team !== "",
+      data.importantDoc === "済",
+      data.transport !== "",
+      data.insuranceCard !== "未",
+      data.careInsurance !== "未",
+      data.burdenRatio !== "未",
+      data.selfSupport !== "未",
+      data.limitAmount !== "未",
+      data.handbooks.some(h => h.status !== "未"),
+      data.aplus === "済" || data.aplus === "生活保護",
+      data.prescription === "済" || data.prescription === "処方なし",
+      // 訪問看護指示書（全5項目）
+      data.instruction === "済",
+      !!data.instructionDest,
+      !!data.instructionDoctor,
+      !!data.instructionDate,
+      !!data.instructionStart,
+      !!data.instructionReason,
+      // 正式名
+      data.namestyle !== "",
+      // 注意事項（全項目）
+      data.cautionVisitTime,
+      data.cautionTeam,
+      data.cautionStayTime,
+      data.cautionHoliday,
+      ...(isKaigo ? [data.cautionCareInsNurse, data.cautionCareInsReport] : []),
+    ];
+    const d = bools.filter(Boolean).length;
+    return { done: d, total: bools.length };
+  })();
+
+  return (
+    <div className="pb-8 px-4 pt-4">
+      {/* Progress */}
+      <div className="bg-sky-50 rounded-2xl p-4 mb-4 border border-sky-100 shadow-sm">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-xs text-slate-700 font-semibold">進捗</span>
+          <span className="text-teal-700 font-bold text-sm">{done.done} / {done.total}</span>
+        </div>
+        <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-teal-500 to-emerald-400 rounded-full transition-all duration-500" style={{ width: `${done.total ? (done.done / done.total * 100) : 0}%` }} />
+        </div>
+      </div>
+
+      {/* 基本情報 */}
+      <Divider>基本情報</Divider>
+      <Card>
+        <div className="space-y-3">
+          <TInput label="利用者氏名" value={data.basicInfo.userName} required
+            onChange={v => setData(p => ({ ...p, basicInfo: { ...p.basicInfo, userName: v } }))}
+            placeholder="例：山田 太郎" badge={hasFS && !!fs.userName} />
+          <TInput label="生年月日" type="date" value={data.basicInfo.birthDate} required
+            onChange={v => setData(p => ({ ...p, basicInfo: { ...p.basicInfo, birthDate: v } }))}
+            badge={hasFS && !!fs.birthDate} />
+          <TInput label="電話番号（固定）" type="tel" value={data.basicInfo.phone}
+            onChange={v => setData(p => ({ ...p, basicInfo: { ...p.basicInfo, phone: v } }))}
+            placeholder="0742-xx-xxxx" badge={hasFS && !!fs.phone} />
+          <TInput label="電話番号（携帯）" type="tel" value={data.basicInfo.mobilePhone}
+            onChange={v => setData(p => ({ ...p, basicInfo: { ...p.basicInfo, mobilePhone: v } }))}
+            placeholder="090-xxxx-xxxx" badge={hasFS && !!fs.mobilePhone} />
+          <TTextarea label="住所" value={data.basicInfo.address} required
+            onChange={v => setData(p => ({ ...p, basicInfo: { ...p.basicInfo, address: v } }))}
+            placeholder="例：奈良県大和郡山市…" badge={hasFS && !!fs.address} voice rows={2} />
+          <TInput label="契約日" type="date" value={data.basicInfo.contractDate} required
+            onChange={v => setData(p => ({ ...p, basicInfo: { ...p.basicInfo, contractDate: v } }))} />
+        </div>
+      </Card>
+
+      <Divider>チェック項目</Divider>
+
+      {/* 訪問看護（保険種別） */}
+      <Card>
+        <CardLabel required done={data.visitType !== ""}>訪問看護（保険種別）</CardLabel>
+        <ChipSelect val={data.visitType} opts={["自立支援","医療保険","介護保険","自費"]} onChange={v => set("visitType", v)} large />
+      </Card>
+
+      {/* 生活保護 */}
+      <Card>
+        <CardLabel required done={data.welfare !== ""}>生活保護</CardLabel>
+        <Toggle2 val={data.welfare} opts={[
+          { label: "非該当", value: "非該当" },
+          { label: "該当", value: "該当" },
+        ]} onChange={v => set("welfare", v)} />
+        {data.welfare === "該当" && <p className="text-xs text-orange-300 mt-2">→ 医療保険証を「不要」に自動設定しました</p>}
+      </Card>
+
+      {/* 訪問先 */}
+      <Card>
+        <CardLabel required done={data.visitPlace !== ""}>訪問先</CardLabel>
+        <ChipSelect val={data.visitPlace} opts={["自宅","施設","その他"]} onChange={v => set("visitPlace", v)} large />
+        {data.visitPlace === "その他" && (
+          <div className="mt-2"><TInput value={data.visitPlaceOther} onChange={v => set("visitPlaceOther", v)} placeholder="訪問先を入力…" voice /></div>
+        )}
+        {/* 別住所（訪問先が住所と異なる場合） */}
+        <div className="mt-3 pt-3 border-t border-slate-700/60">
+          <label className="text-xs text-slate-500 block mb-1">
+            訪問先住所
+            <span className="ml-2 text-slate-500 font-normal">（住所と異なる場合に入力）</span>
+          </label>
+          <TInput
+            value={data.basicInfo.visitAddress}
+            onChange={v => setData(p => ({ ...p, basicInfo: { ...p.basicInfo, visitAddress: v } }))}
+            placeholder="例：奈良県大和郡山市…（空欄の場合は基本情報の住所を使用）"
+            voice
+          />
+          {data.basicInfo.address && !data.basicInfo.visitAddress && (
+            <p className="text-xs text-slate-500 mt-1">
+              現在の住所：{data.basicInfo.address}
+            </p>
+          )}
+          {data.basicInfo.visitAddress && (
+            <p className="text-xs text-teal-700 mt-1">✓ 別住所を設定中</p>
+          )}
+        </div>
+      </Card>
+
+      {/* 担当チーム・スタッフ */}
+      <Card>
+        <CardLabel required done={data.team !== ""}>担当チームとスタッフ</CardLabel>
+        <div className="space-y-1 mb-2">
+          <label className="text-xs text-slate-500">担当チーム</label>
+          <select value={data.team} onChange={e => set("team", e.target.value)}
+            className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-slate-800 text-base focus:outline-none focus:border-teal-500 appearance-none">
+            <option value="">選択してください</option>
+            {TEAMS.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </div>
+        <TInput label="担当スタッフ" value={data.staff} onChange={v => set("staff", v)} placeholder="氏名を入力…" voice />
+      </Card>
+
+      {/* 重要事項説明書 */}
+      <Card>
+        <CardLabel required done={data.importantDoc === "済"}>重要事項説明書・契約書</CardLabel>
+        <Toggle2 val={data.importantDoc} opts={[{ label: "済", value: "済" }, { label: "未", value: "未" }]} onChange={v => set("importantDoc", v)} />
+      </Card>
+
+      {/* 交通費 */}
+      <Card>
+        <CardLabel required done={data.transport !== ""}>交通費</CardLabel>
+        <Toggle2 val={data.transport} opts={[{ label: "有", value: "有" }, { label: "無", value: "無" }]} onChange={v => set("transport", v)} />
+      </Card>
+
+      {/* 加算 */}
+      <Card>
+        <CardLabel>加算</CardLabel>
+        <div className="space-y-4">
+          {[{ key: "addition24h", label: "24時間対応加算" }, { key: "additionMultiple", label: "複数名訪問加算" }].map(({ key, label }) => (
+            <div key={key} className="border-b border-slate-700/50 pb-4 last:border-0 last:pb-0">
+              <span className="text-slate-700 text-sm font-medium block mb-2">{label}</span>
+              <Toggle2 val={data[key]} opts={[{ label: "有", value: "有" }, { label: "無", value: "無" }]} onChange={v => set(key, v)} large />
+            </div>
+          ))}
+          <div>
+            <span className="text-slate-700 text-sm font-medium block mb-2">特別管理加算</span>
+            <Toggle2 val={data.additionSpecial} opts={[{ label: "有", value: "有" }, { label: "無", value: "無" }]} onChange={v => set("additionSpecial", v)} large />
+            {data.additionSpecial === "有" && (
+              <div className="mt-2"><TInput value={data.additionSpecialDisease} onChange={v => set("additionSpecialDisease", v)} placeholder="疾患名を入力…" voice /></div>
+            )}
+          </div>
+        </div>
+      </Card>
+
+      {/* 医療保険証確認 */}
+      <Card className={data.insuranceCard === "有" ? "border-teal-300 bg-teal-50" : data.insuranceCard === "不要" ? "bg-white" : ""}>
+        <span className="text-slate-700 font-semibold text-sm block mb-2">★ 医療保険証{data.insuranceCard === "未" && <span className="ml-2 text-[10px] font-bold text-red-700 bg-red-100 border border-red-400 px-1.5 py-0.5 rounded-full">必須</span>}{data.insuranceCard !== "未" && <span className="ml-2 text-[10px] font-bold text-emerald-700">✓</span>}</span>
+        <ChipSelect val={data.insuranceCard} opts={["有","無","不要"]} onChange={v => set("insuranceCard", v)} large />
+        <PhotoBtn photo={data.insuranceCardPhoto} onPhoto={handleInsPhoto("insuranceCardPhoto","insuranceCard")} />
+      </Card>
+
+      {/* 介護保険証 */}
+      <Card className={data.careInsurance === "有" ? "border-teal-300 bg-teal-50" : ""}>
+        <span className="text-slate-700 font-semibold text-sm block mb-2">★ 介護保険証{data.careInsurance === "未" && <span className="ml-2 text-[10px] font-bold text-red-700 bg-red-100 border border-red-400 px-1.5 py-0.5 rounded-full">必須</span>}{data.careInsurance !== "未" && <span className="ml-2 text-[10px] font-bold text-emerald-700">✓</span>}</span>
+        <Toggle2 val={data.careInsurance} opts={[{ label: "有", value: "有" }, { label: "無", value: "無" }]} onChange={v => set("careInsurance", v)} large />
+        <PhotoBtn photo={data.careInsurancePhoto} onPhoto={handleInsPhoto("careInsurancePhoto","careInsurance")} />
+      </Card>
+
+      {/* 負担割合証 */}
+      <Card className={data.burdenRatio === "有" ? "border-teal-300 bg-teal-50" : ""}>
+        <span className="text-slate-700 font-semibold text-sm block mb-2">★ 負担割合証{data.burdenRatio === "未" && <span className="ml-2 text-[10px] font-bold text-red-700 bg-red-100 border border-red-400 px-1.5 py-0.5 rounded-full">必須</span>}{data.burdenRatio !== "未" && <span className="ml-2 text-[10px] font-bold text-emerald-700">✓</span>}</span>
+        <Toggle2 val={data.burdenRatio} opts={[{ label: "有", value: "有" }, { label: "無", value: "無" }]} onChange={v => set("burdenRatio", v)} large />
+        <PhotoBtn photo={data.burdenRatioPhoto} onPhoto={handleInsPhoto("burdenRatioPhoto","burdenRatio")} />
+      </Card>
+
+      {/* 自立支援医療受給者証 */}
+      <Card className={data.selfSupport === "有" ? "border-teal-300 bg-teal-50" : ""}>
+        <span className="text-slate-700 font-semibold text-sm block mb-2">★ 自立支援医療受給者証{data.selfSupport === "未" && <span className="ml-2 text-[10px] font-bold text-red-700 bg-red-100 border border-red-400 px-1.5 py-0.5 rounded-full">必須</span>}{data.selfSupport !== "未" && <span className="ml-2 text-[10px] font-bold text-emerald-700">✓</span>}</span>
+        <Toggle2 val={data.selfSupport} opts={[{ label: "有", value: "有" }, { label: "無", value: "無" }]} onChange={v => set("selfSupport", v)} large />
+        <PhotoBtn photo={data.selfSupportPhoto} onPhoto={handleSelfSupportPhoto} />
+        {data.selfSupport === "有" && (
+          <div className="mt-3">
+            <Toggle2 val={data.selfSupportMode}
+              opts={[{ label: "新規", value: "新規" }, { label: "追加", value: "追加" }]} large
+              onChange={v => set("selfSupportMode", v)} />
+
+            {data.selfSupportMode === "新規" && (
+              <div className="mt-3 space-y-3 border-t border-slate-700 pt-3">
+                {/* 申請予定者 */}
+                <div>
+                  <label className="text-xs text-slate-500 block mb-1">申請予定者</label>
+                  <ChipSelect val={data.ssApplicant} opts={APPLICANTS} onChange={handleApplicantChange} />
+                  {data.ssApplicant === "その他" && <div className="mt-2"><TInput value={data.ssDocLocationOther} onChange={v => set("ssDocLocationOther", v)} placeholder="詳細を入力…" voice /></div>}
+                </div>
+                {/* 役場提出予定 */}
+                <div>
+                  <label className="text-xs text-slate-500 block mb-1">役場提出予定</label>
+                  <TInput type="date" value={data.ssSubmitDate} onChange={v => set("ssSubmitDate", v)} className="mb-2" />
+                  <ChipSelect val={data.ssSubmitter} opts={APPLICANTS} onChange={v => set("ssSubmitter", v)} />
+                  {data.ssSubmitter === "その他" && <div className="mt-2"><TInput value={data.ssSubmitterOther} onChange={v => set("ssSubmitterOther", v)} placeholder="詳細を入力…" voice /></div>}
+                </div>
+                {/* 申請書類の所在 */}
+                <div>
+                  <label className="text-xs text-slate-500 block mb-1">申請書類の所在</label>
+                  <ChipSelect val={data.ssDocLocation} opts={APPLICANTS} onChange={v => set("ssDocLocation", v)} />
+                  {data.ssDocLocation === "その他" && <div className="mt-2"><TInput value={data.ssDocLocationOther} onChange={v => set("ssDocLocationOther", v)} placeholder="詳細を入力…" voice /></div>}
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500 block mb-1">診断書代の説明</label>
+                  <Toggle2 val={data.ssDiagExplain} opts={[{ label: "済", value: "済" }, { label: "未", value: "未" }]} onChange={v => set("ssDiagExplain", v)} />
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500 block mb-1">診断書依頼</label>
+                  <TInput type="date" value={data.ssDiagRequest} onChange={v => set("ssDiagRequest", v)} className="mb-2" />
+                  <ChipSelect val={data.ssDiagRequestStatus} opts={["済","予定","未確定"]} onChange={v => set("ssDiagRequestStatus", v)} />
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500 block mb-1">薬局と病院確認</label>
+                  <Toggle2 val={data.ssPharmacyCheck} opts={[{ label: "済", value: "済" }, { label: "未", value: "未" }]} onChange={v => set("ssPharmacyCheck", v)} />
+                </div>
+                <TTextarea label="その他" value={data.ssNote} onChange={v => set("ssNote", v)} placeholder="自由記述…" voice />
+              </div>
+            )}
+
+            {data.selfSupportMode === "追加" && (
+              <div className="mt-3 space-y-3 border-t border-slate-700 pt-3">
+                <div>
+                  <label className="text-xs text-slate-500 block mb-1">申請予定者</label>
+                  <ChipSelect val={data.ssAddApplicant} opts={APPLICANTS} onChange={handleAddApplicantChange} />
+                  {data.ssAddApplicant === "その他" && <div className="mt-2"><TInput value={data.ssAddDocLocationOther} onChange={v => set("ssAddDocLocationOther", v)} placeholder="詳細を入力…" voice /></div>}
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500 block mb-1">役場提出予定</label>
+                  <TInput type="date" value={data.ssAddSubmitDate} onChange={v => set("ssAddSubmitDate", v)} className="mb-2" />
+                  <ChipSelect val={data.ssAddSubmitter} opts={APPLICANTS} onChange={v => set("ssAddSubmitter", v)} />
+                  {data.ssAddSubmitter === "その他" && <div className="mt-2"><TInput value={data.ssAddSubmitterOther} onChange={v => set("ssAddSubmitterOther", v)} placeholder="詳細を入力…" voice /></div>}
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500 block mb-1">申請書類の所在</label>
+                  <ChipSelect val={data.ssAddDocLocation} opts={APPLICANTS} onChange={v => set("ssAddDocLocation", v)} />
+                  {data.ssAddDocLocation === "その他" && <div className="mt-2"><TInput value={data.ssAddDocLocationOther} onChange={v => set("ssAddDocLocationOther", v)} placeholder="詳細を入力…" voice /></div>}
+                </div>
+                <TTextarea label="その他" value={data.ssAddNote} onChange={v => set("ssAddNote", v)} placeholder="自由記述…" voice />
+              </div>
+            )}
+          </div>
+        )}
+      </Card>
+
+      {/* 限度額認定証 */}
+      <Card className={data.limitAmount === "有" ? "border-teal-300 bg-teal-50" : ""}>
+        <span className="text-slate-700 font-semibold text-sm block mb-2">★ 限度額認定証{data.limitAmount === "未" && <span className="ml-2 text-[10px] font-bold text-red-700 bg-red-100 border border-red-400 px-1.5 py-0.5 rounded-full">必須</span>}{data.limitAmount !== "未" && <span className="ml-2 text-[10px] font-bold text-emerald-700">✓</span>}</span>
+        <Toggle2 val={data.limitAmount} opts={[{ label: "有", value: "有" }, { label: "無", value: "無" }]} onChange={v => set("limitAmount", v)} large />
+        <PhotoBtn photo={data.limitAmountPhoto} onPhoto={handleInsPhoto("limitAmountPhoto","limitAmount")} />
+      </Card>
+
+      {/* 手帳（複数対応） */}
+      <Card>
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-slate-700 font-semibold text-sm">★ 精神・身体・療育手帳</span>
+          {hasFS && fs.hasHandicapBook && <span className="text-xs text-teal-700 bg-teal-50 border border-teal-300 px-2 py-0.5 rounded-full">FS：手帳あり</span>}
+        </div>
+        {data.handbooks.map((hb, hi) => (
+          <div key={hi} className={`mb-3 p-3 rounded-xl border ${hb.status === "有" ? "border-teal-300 bg-teal-50/80" : "border-slate-200 bg-white"}`}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-slate-700 font-semibold">手帳 {hi + 1}</span>
+              {hi > 0 && (
+                <button onClick={() => setData(p => ({ ...p, handbooks: p.handbooks.filter((_,j) => j !== hi) }))}
+                  className="text-xs text-red-600 border border-red-300 px-2 py-1 rounded-lg active:scale-95">削除</button>
+              )}
+            </div>
+            <Toggle2 val={hb.status}
+              opts={[{ label: "有", value: "有" }, { label: "無", value: "無" }]}
+              onChange={v => setData(p => ({ ...p, handbooks: p.handbooks.map((x,j) => j===hi ? {...x, status:v} : x) }))} />
+            <PhotoBtn photo={hb.photo}
+              onPhoto={photo => setData(p => ({ ...p, handbooks: p.handbooks.map((x,j) => j===hi ? {...x, photo, status:"有"} : x) }))} />
+          </div>
+        ))}
+        <button onClick={() => setData(p => ({ ...p, handbooks: [...p.handbooks, { status: "未", photo: null }] }))}
+          className="w-full py-2 rounded-xl border border-dashed border-teal-600/60 text-teal-700 text-sm font-bold active:scale-[0.99]">
+          ＋ 手帳を追加
+        </button>
+      </Card>
+
+      {/* アプラス */}
+      <Card>
+        <CardLabel required done={data.aplus === "済" || data.aplus === "生活保護"}>アプラス用紙</CardLabel>
+        <div className="flex gap-2">
+          {[
+            { label: "済", value: "済" },
+            { label: "生活保護", value: "生活保護", color: "bg-orange-600 border-orange-500 text-white" },
+            { label: "未", value: "未" },
+          ].map(opt => (
+            <button key={opt.value} onClick={() => set("aplus", opt.value)}
+              className={`flex-1 py-5 rounded-xl text-base font-bold border transition-all active:scale-95 min-h-[60px] ${data.aplus === opt.value ? "bg-teal-600 border-teal-500 text-white" : "bg-white border-slate-300 text-slate-600"}`}>
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <div className="mt-2"><TTextarea value={data.aplusNote} onChange={v => set("aplusNote", v)} placeholder="備考（任意）…" voice /></div>
+      </Card>
+
+      {/* 各病院の次回受診日 */}
+      <Card>
+        <CardLabel>各病院の次回受診日</CardLabel>
+        <div className="space-y-3">
+          {data.nextVisits.map((nv, i) => (
+            <div key={i} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-700 font-semibold">医療機関 {i + 1}</span>
+                {i > 0 && <button onClick={() => setData(p => ({ ...p, nextVisits: p.nextVisits.filter((_,j)=>j!==i) }))}
+                  className="text-xs text-red-600 border border-red-300 px-2 py-0.5 rounded-lg active:scale-95">削除</button>}
+              </div>
+              <TInput value={nv.hospital} onChange={v => setData(p => ({ ...p, nextVisits: p.nextVisits.map((x,j) => j===i ? {...x,hospital:v} : x) }))} placeholder="医療機関名" voice />
+              <TInput value={nv.doctor} onChange={v => setData(p => ({ ...p, nextVisits: p.nextVisits.map((x,j) => j===i ? {...x,doctor:v} : x) }))} placeholder="主治医名" label="主治医" voice />
+              {i === 0 && (nv.hospital || nv.doctor) && (
+                <div className="flex items-center gap-1.5 mt-1 px-2 py-1.5 bg-teal-50 border border-teal-200 rounded-lg">
+                  <span className="text-[10px] text-teal-700 font-bold">↓ 自動反映中</span>
+                  <span className="text-[10px] text-teal-600">指示書の依頼先・主治医 ／ 緊急連絡先の主治医</span>
+                </div>
+              )}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs text-slate-500">次回受診日</label>
+                  <button
+                    onClick={() => setData(p => ({ ...p, nextVisits: p.nextVisits.map((x,j) => j===i ? {...x, undecided: !x.undecided, date: !x.undecided ? "" : x.date} : x) }))}
+                    className={`text-xs font-bold px-3 py-1 rounded-lg border transition-all active:scale-95 ${nv.undecided ? "bg-slate-600 border-slate-500 text-white" : "bg-white border-slate-300 text-slate-600"}`}>
+                    未定
+                  </button>
+                </div>
+                {nv.undecided ? (
+                  <div className="w-full bg-slate-100 border border-slate-300 rounded-xl px-3 py-3 text-slate-500 text-sm text-center">未定</div>
+                ) : (
+                  <input type="date" value={nv.date} onChange={e => setData(p => ({ ...p, nextVisits: p.nextVisits.map((x,j) => j===i ? {...x,date:e.target.value} : x) }))}
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-3 text-slate-800 text-sm focus:outline-none focus:border-teal-500" />
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+        <button onClick={() => setData(p => ({ ...p, nextVisits: [...p.nextVisits, { hospital: "", doctor: "", date: "", undecided: false }] }))}
+          className="mt-3 w-full py-4 rounded-xl border border-dashed border-teal-600 text-teal-700 text-base font-bold active:scale-[0.99]">＋ 医療機関を追加</button>
+      </Card>
+
+      {/* 処方内容 */}
+      <Card className={data.prescription === "済" ? "border-emerald-400/50 bg-emerald-50" : data.prescription === "処方なし" ? "border-slate-200 bg-slate-50" : ""}>
+        <CardLabel required done={data.prescription === "済" || data.prescription === "処方なし"}>処方内容</CardLabel>
+        <div className="flex gap-2 mb-3">
+          {[{ label: "済", value: "済" }, { label: "処方なし", value: "処方なし", color: "bg-slate-600 border-slate-500 text-white" }, { label: "未", value: "未" }].map(opt => (
+            <button key={opt.value} onClick={() => set("prescription", opt.value)}
+              className={`flex-1 py-4 rounded-xl text-base font-bold border transition-all active:scale-95 min-h-[54px] ${data.prescription === opt.value ? "bg-teal-600 border-teal-500 text-white" : "bg-white border-slate-300 text-slate-600"}`}>
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        {data.prescription !== "処方なし" && (
+          <>
+            <PhotoBtn photo={data.prescriptionPhoto}
+              onPhoto={p => { setData(d => ({ ...d, prescriptionPhoto: p, prescription: "済" })); if (onPrescriptionPhoto) onPrescriptionPhoto(p); }}
+              label="処方内容を撮影" />
+            {data.prescriptionPhoto && (
+              <p className="text-xs text-teal-700 mt-1.5">✦ 記録書Ⅰにも反映されます</p>
+            )}
+          </>
+        )}
+      </Card>
+
+      {/* 訪問看護指示書の依頼 */}
+      <Card>
+<div className="flex items-center gap-2 mb-1">
+          <span className="text-slate-700 font-semibold text-sm">訪問看護指示書の依頼</span>
+          {data.instruction !== "済"
+            ? <span className="text-[10px] font-bold text-red-700 bg-red-100 border border-red-400 px-1.5 py-0.5 rounded-full">必須</span>
+            : <span className="text-[10px] font-bold text-teal-700">✓</span>}
+        </div>
+        {data.nextVisits && data.nextVisits[0] && data.nextVisits[0].hospital && (
+          <div className="flex items-center gap-1 mb-3 px-2 py-1 bg-teal-50 border border-teal-200 rounded-lg">
+            <span className="text-[10px] text-teal-600">↑ 医療機関1（{data.nextVisits[0].hospital}）から自動反映</span>
+          </div>
+        )}
+        <Toggle2 val={data.instruction} opts={[{ label: "済", value: "済" }, { label: "未", value: "未" }]} onChange={v => set("instruction", v)} large />
+        <div className="mt-3">
+        </div>
+        <div className="space-y-2 mt-2">
+          <TInput label="依頼先" value={data.instructionDest} required onChange={v => set("instructionDest", v)} placeholder="例：○○クリニック" voice badge={hasFS && !!fs.doctorHospital} />
+          <TInput label="主治医" value={data.instructionDoctor} required onChange={v => set("instructionDoctor", v)} placeholder="例：田中 医師" voice badge={hasFS && !!fs.doctorName} />
+          <TInput label="依頼日" type="date" value={data.instructionDate} required onChange={v => set("instructionDate", v)} />
+          <TInput label="指示書開始日" type="date" value={data.instructionStart} required onChange={v => set("instructionStart", v)} />
+          <TTextarea label="依頼理由" value={data.instructionReason} required onChange={v => set("instructionReason", v)} placeholder="理由を入力…" rows={2} voice />
+        </div>
+      </Card>
+
+      {/* 正式な名前の書体 */}
+      <Card>
+        <CardLabel required done={data.namestyle !== ""}>正式な名前の書体</CardLabel>
+        <Toggle2 val={data.namestyle} opts={[{ label: "必要", value: "必要" }, { label: "不必要", value: "不必要" }]} onChange={v => set("namestyle", v)} />
+        {data.namestyle === "必要" && (
+          <div className="mt-3 space-y-2">
+            <label className="text-xs text-slate-500 block">難しい漢字を手書き入力（タッチして書いてください）</label>
+            <KanjiCanvas value={data.namestyleKanji} onChange={v => set("namestyleKanji", v)} />
+            <TInput value={data.namestyleKanji} onChange={v => set("namestyleKanji", v)} placeholder="または、テキストで入力…" />
+          </div>
+        )}
+      </Card>
+
+      {/* 注意事項確認 */}
+      <Divider>注意事項確認</Divider>
+      <div className="space-y-2">
+        {[
+          { key: "cautionVisitTime", label: "訪問時間は前後することを説明" },
+          { key: "cautionTeam", label: "チーム制になっているので指名に応えられないことを説明" },
+          { key: "cautionStayTime", label: "滞在時間について説明" },
+          { key: "cautionHoliday", label: "祝日と訪問日が重なればその週で振替えて別日に訪問することを説明" },
+          ...(isKaigo ? [
+            { key: "cautionCareInsNurse", label: "介護保険で看護師以外が訪問する際ケアマネに説明" },
+            { key: "cautionCareInsReport", label: "実際の訪問時間は実績で報告とケアマネに説明" },
+          ] : []),
+        ].map(({ key, label }) => (
+          <button key={key} onClick={() => setData(p => ({ ...p, [key]: !p[key] }))}
+            className={`w-full flex items-start gap-3 p-4 rounded-2xl border text-left transition-all active:scale-[0.99] ${data[key] ? "bg-teal-100 border-teal-500" : "bg-white border-slate-300"}`}>
+            <div className={`w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center border-2 mt-0.5 ${data[key] ? "bg-emerald-500 border-emerald-500" : "border-slate-300 bg-white"}`}>
+              {data[key] && <span className="text-white text-xs font-bold">✓</span>}
+            </div>
+            <span className="text-slate-700 text-sm leading-relaxed">{label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* 申し送り事項 */}
+      <Divider>申し送り事項</Divider>
+      <Card>
+        <TTextarea value={data.handover} onChange={v => set("handover", v)} placeholder="申し送り事項を入力…" rows={4} voice />
+      </Card>
+
+      {/* 書類写真をDriveに送信 */}
+      <DriveUploadBtn data={data} toast={toast} />
+    </div>
+  );
+}
+
+// ===== Google Drive 書類写真アップロードボタン =====
+function DriveUploadBtn({ data, toast }) {
+  const [uploading, setUploading] = useState(false);
+  const [done, setDone] = useState(false);
+  const [folderUrl, setFolderUrl] = useState("");
+
+  const photos = [
+    { label: "処方内容", photo: data.prescriptionPhoto },
+    { label: "医療保険証", photo: data.insuranceCardPhoto },
+    { label: "介護保険証", photo: data.careInsurancePhoto },
+    { label: "負担割合証", photo: data.burdenRatioPhoto },
+    { label: "自立支援医療受給者証", photo: data.selfSupportPhoto },
+    { label: "限度額認定証", photo: data.limitAmountPhoto },
+    ...(data.handbooks || []).map((hb, i) => ({
+      label: `手帳${data.handbooks.length > 1 ? (i + 1) : ""}`,
+      photo: hb.photo,
+    })),
+  ].filter(p => p.photo);
+
+  const handleUpload = async () => {
+    if (photos.length === 0) {
+      toast.error("送信する写真がありません");
+      return;
+    }
+    setUploading(true);
+    try {
+      const payload = {
+        userName: data.basicInfo?.userName || "不明",
+        photos: photos.map(p => ({
+          label: p.label,
+          data: p.photo.split(",")[1],
+          mimeType: "image/jpeg",
+        })),
+      };
+      const res = await fetch("https://hinata-app-production.up.railway.app/api/upload-photos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setDone(true);
+        setFolderUrl(result.folderUrl);
+        toast.success(`${photos.length}枚をDriveに送信しました ✦`);
+      } else {
+        throw new Error(result.error || "送信失敗");
+      }
+    } catch (err) {
+      toast.error("送信に失敗しました: " + err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="px-1 pb-4">
+      <div className="bg-sky-50 border border-sky-200 rounded-2xl p-4">
+        <p className="text-sm font-bold text-sky-800 mb-1">📁 書類写真をGoogle Driveに送信</p>
+        <p className="text-xs text-sky-600 mb-3">
+          {photos.length > 0
+            ? `送信対象: ${photos.map(p => p.label).join("・")}（${photos.length}枚）`
+            : "写真が撮影されていません"}
+        </p>
+        <button onClick={handleUpload}
+          disabled={uploading || photos.length === 0}
+          className="w-full py-4 rounded-xl font-bold text-base border transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2 bg-sky-600 border-sky-500 text-white">
+          {uploading
+            ? <><span className="animate-spin text-xl">⏳</span><span>送信中…</span></>
+            : done
+            ? <><span>✓</span><span>送信完了</span></>
+            : <><span>📤</span><span>Driveに送信してChatに通知</span></>}
+        </button>
+        {done && folderUrl && (
+          <p className="text-xs text-sky-700 mt-2 text-center">
+            ✓ Google Chatにも通知済み
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ===== KANJI CANVAS =====
+function KanjiCanvas({ value, onChange }) {
+  const canvasRef = useRef();
+  const drawing = useRef(false);
+  const lastPos = useRef(null);
+
+  const getPos = (e, canvas) => {
+    const rect = canvas.getBoundingClientRect();
+    const src = e.touches ? e.touches[0] : e;
+    return { x: (src.clientX - rect.left) * (canvas.width / rect.width), y: (src.clientY - rect.top) * (canvas.height / rect.height) };
+  };
+
+  const start = e => { e.preventDefault(); drawing.current = true; const pos = getPos(e, canvasRef.current); lastPos.current = pos; };
+  const move = e => {
+    e.preventDefault();
+    if (!drawing.current) return;
+    const canvas = canvasRef.current; const ctx = canvas.getContext("2d");
+    const pos = getPos(e, canvas);
+    ctx.beginPath(); ctx.moveTo(lastPos.current.x, lastPos.current.y); ctx.lineTo(pos.x, pos.y);
+    ctx.strokeStyle = "#94d3c3"; ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.stroke();
+    lastPos.current = pos;
+  };
+  const end = () => { drawing.current = false; };
+  const clear = () => { const canvas = canvasRef.current; canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height); };
+
+  return (
+    <div className="space-y-2">
+      <canvas ref={canvasRef} width={600} height={300}
+        className="w-full h-56 bg-slate-100 border border-slate-300 rounded-xl cursor-crosshair touch-none"
+        style={{WebkitUserSelect:'none',userSelect:'none',WebkitTouchCallout:'none'}}
+        onContextMenu={e => e.preventDefault()}
+        onMouseDown={start} onMouseMove={move} onMouseUp={end} onMouseLeave={end}
+        onTouchStart={start} onTouchMove={move} onTouchEnd={end} onTouchCancel={end} />
+      <button onClick={clear} className="text-xs text-slate-500 border border-slate-200 px-3 py-1.5 rounded-lg active:scale-95">クリア</button>
+    </div>
+  );
+}
+
+// ===== EMERGENCY TAB =====
+function RelationSelect({ value, onChange, relationOther, onOtherChange }) {
+  return (
+    <div className="space-y-1">
+      <label className="text-xs text-slate-500">続柄</label>
+      <select value={value} onChange={e => onChange(e.target.value)}
+        className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-slate-800 text-base focus:outline-none focus:border-teal-500 appearance-none">
+        <option value="">選択してください</option>
+        {FAMILY_RELATIONS.map(r => <option key={r} value={r}>{r}</option>)}
+      </select>
+      {value === "その他" && (
+        <TInput value={relationOther} onChange={onOtherChange} placeholder="続柄を入力…" voice />
+      )}
+    </div>
+  );
+}
+
+function ContactCard({ person, index, label, color, badge, onUpdate, onRemove, showRemove, fsBadge }) {
+  return (
+    <Card>
+      <div className="flex justify-between items-center mb-3">
+        <div className="flex items-center gap-2">
+          <span className={`text-xs font-bold ${color}`}>{label} {index + 1}</span>
+          {fsBadge && <FSBadge />}
+        </div>
+        {showRemove && (
+          <button onClick={onRemove} className="text-xs text-red-600 border border-red-300 px-2 py-1 rounded-lg active:scale-95">削除</button>
+        )}
+      </div>
+      <div className="space-y-2">
+        <TInput label="氏名" value={person.name} onChange={v => onUpdate({ name: v })} placeholder="山田 花子" />
+        <RelationSelect value={person.relation} onChange={v => onUpdate({ relation: v })} relationOther={person.relationOther} onOtherChange={v => onUpdate({ relationOther: v })} />
+        <TInput label="電話番号（固定）" type="tel" value={person.phone} onChange={v => onUpdate({ phone: v })} placeholder="0742-xx-xxxx" />
+        <TInput label="電話番号（携帯）" type="tel" value={person.mobilePhone || ""} onChange={v => onUpdate({ mobilePhone: v })} placeholder="090-xxxx-xxxx" />
+        <TTextarea label="備考" value={person.note} onChange={v => onUpdate({ note: v })} placeholder="緊急時の優先順位、連絡可能時間など…" rows={2} voice />
+      </div>
+    </Card>
+  );
+}
+
+function EmergencyTab({ data, setData, fs, contractData, toast }) {
+  const hasFS = !!fs.extractedAt;
+
+  const updFamily = (i, u) => setData(p => ({ ...p, family: p.family.map((f, j) => j === i ? { ...f, ...u } : f) }));
+  const addFamily = () => setData(p => ({ ...p, family: [...p.family, { name: "", relation: "", relationOther: "", phone: "", mobilePhone: "", note: "" }] }));
+  const rmFamily = (i) => setData(p => ({ ...p, family: p.family.filter((_, j) => j !== i) }));
+
+  const updOther = (i, u) => setData(p => ({ ...p, otherContacts: p.otherContacts.map((f, j) => j === i ? { ...f, ...u } : f) }));
+  const addOther = () => setData(p => ({ ...p, otherContacts: [...p.otherContacts, { name: "", relation: "", relationOther: "", phone: "", mobilePhone: "", note: "" }] }));
+  const rmOther = (i) => setData(p => ({ ...p, otherContacts: p.otherContacts.filter((_, j) => j !== i) }));
+
+  const addSup = () => setData(p => ({ ...p, supporters: [...p.supporters, { role: "", roleOther: "", name: "", phone: "", note: "" }] }));
+  const updSup = (i, u) => setData(p => ({ ...p, supporters: p.supporters.map((s, j) => j === i ? { ...s, ...u } : s) }));
+  const rmSup = (i) => setData(p => ({ ...p, supporters: p.supporters.filter((_, j) => j !== i) }));
+
+  const handleCardScan = (i) => (result) => {
+    updSup(i, { name: result.name || "", phone: result.phone || "", note: [result.organization, result.note].filter(Boolean).join(" / ") });
+  };
+
+  return (
+    <div className="pb-8 px-4 pt-4">
+      {hasFS && (fs.familyContact || fs.referralSource || fs.doctorHospital) && (
+        <div className="bg-teal-50 border border-teal-300 rounded-2xl p-3 mb-4">
+          <div className="flex items-center gap-2 mb-2"><FSBadge /><span className="text-xs text-teal-700 font-semibold">FSより自動入力済み（確認・追加してください）</span></div>
+          {fs.familyContact && <p className="text-xs text-slate-500">家族：{fs.familyContact} {fs.familyPhone}</p>}
+          {fs.referralSource && <p className="text-xs text-slate-500">依頼元：{fs.referralSource} {fs.referralPhone}</p>}
+          {fs.doctorHospital && <p className="text-xs text-slate-500">主治医病院：{fs.doctorHospital}（{fs.doctorName}）</p>}
+        </div>
+      )}
+
+      {/* ===== 家族・親族 ===== */}
+      <Divider>家族・親族</Divider>
+
+      {/* 家族有り / 家族無し */}
+      <div className="flex gap-2 mb-4">
+        <button onClick={() => setData(p => ({ ...p, familyMode: "有" }))}
+          className={`flex-1 py-5 rounded-2xl text-base font-bold border transition-all active:scale-95 min-h-[60px] ${data.familyMode === "有" ? "bg-teal-600 border-teal-500 text-white" : "bg-white border-slate-300 text-slate-600"}`}>
+          家族有り
+        </button>
+        <button onClick={() => setData(p => ({ ...p, familyMode: "無" }))}
+          className={`flex-1 py-5 rounded-2xl text-base font-bold border transition-all active:scale-95 min-h-[60px] ${data.familyMode === "無" ? "bg-teal-600 border-teal-500 text-white" : "bg-white border-slate-300 text-slate-600"}`}>
+          家族無し
+        </button>
+      </div>
+
+      {/* 家族有りの場合 */}
+      {data.familyMode === "有" && (
+        <>
+          {data.family.map((f, i) => (
+            <ContactCard key={i} person={f} index={i} label="家族" color="text-teal-700"
+              fsBadge={i === 0 && hasFS && !!fs.familyContact}
+              onUpdate={u => updFamily(i, u)} onRemove={() => rmFamily(i)} showRemove={i > 0} />
+          ))}
+          <button onClick={addFamily} className="w-full py-3 rounded-2xl border border-dashed border-teal-600 text-teal-700 text-sm font-bold active:scale-[0.99] mb-4">＋ 家族を追加</button>
+        </>
+      )}
+
+      {/* 家族無しの場合：その他の連絡先 */}
+      {data.familyMode === "無" && (
+        <div className="mb-4">
+          <div className="bg-teal-50 border border-teal-200 rounded-2xl p-3 mb-4">
+            <p className="text-xs text-slate-500 font-semibold mb-3">その他の連絡先</p>
+            <div className="flex gap-2">
+              <button onClick={() => setData(p => ({ ...p, otherContactMode: "有" }))}
+                className={`flex-1 py-4 rounded-xl text-base font-bold border transition-all active:scale-95 min-h-[54px] ${data.otherContactMode === "有" ? "bg-teal-600 border-teal-500 text-white" : "bg-white border-slate-300 text-slate-600"}`}>
+                連絡先あり
+              </button>
+              <button onClick={() => setData(p => ({ ...p, otherContactMode: "無" }))}
+                className={`flex-1 py-4 rounded-xl text-base font-bold border transition-all active:scale-95 min-h-[54px] ${data.otherContactMode === "無" ? "bg-teal-600 border-teal-500 text-white" : "bg-white border-slate-300 text-slate-600"}`}>
+                その他の連絡先も無し
+              </button>
+            </div>
+          </div>
+
+          {data.otherContactMode === "有" && (
+            <>
+              {data.otherContacts.map((f, i) => (
+                <ContactCard key={i} person={f} index={i} label="連絡先" color="text-purple-400"
+                  onUpdate={u => updOther(i, u)} onRemove={() => rmOther(i)} showRemove={i > 0} />
+              ))}
+              <button onClick={addOther} className="w-full py-3 rounded-2xl border border-dashed border-purple-600/60 text-purple-400 text-sm font-bold active:scale-[0.99] mb-4">＋ 連絡先を追加</button>
+            </>
+          )}
+          {data.otherContactMode === "無" && (
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-4 text-center">
+              <p className="text-sm text-slate-500">連絡先なし</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ===== 主治医 ===== */}
+      <Divider>主治医</Divider>
+      <Card>
+        <div className="space-y-2">
+          {contractData && contractData.nextVisits && contractData.nextVisits[0] && contractData.nextVisits[0].hospital && (
+            <div className="flex items-center gap-1 mb-2 px-2 py-1 bg-teal-50 border border-teal-200 rounded-lg">
+              <span className="text-[10px] text-teal-600">↑ 医療機関1（{contractData.nextVisits[0].hospital}）から自動反映</span>
+            </div>
+          )}
+          <TInput label="病院名" value={data.doctor.hospital} onChange={v => setData(p => ({ ...p, doctor: { ...p.doctor, hospital: v } }))} placeholder="○○クリニック" badge={hasFS && !!fs.doctorHospital} />
+          <TInput label="医師名" value={data.doctor.doctorName} onChange={v => setData(p => ({ ...p, doctor: { ...p.doctor, doctorName: v } }))} placeholder="田中 医師" badge={hasFS && !!fs.doctorName} />
+        </div>
+      </Card>
+
+      {/* ===== 支援者 ===== */}
+      <Divider>支援者</Divider>
+      <p className="text-xs text-slate-500 mb-3 px-1">PSW・ケアマネ・ヘルパー・作業所など</p>
+      {data.supporters.map((s, i) => (
+        <Card key={i}>
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-amber-700 font-bold">支援者 {i + 1}</span>
+              {i === 0 && hasFS && fs.referralSource && <FSBadge />}
+            </div>
+            <div className="flex items-center gap-2">
+              <CardScanBtn onResult={handleCardScan(i)} toast={toast} />
+              {i > 0 && <button onClick={() => rmSup(i)} className="text-xs text-red-600 border border-red-300 px-2 py-1 rounded-lg active:scale-95">削除</button>}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div className="space-y-1">
+              <label className="text-xs text-slate-500">役割</label>
+              <select value={s.role} onChange={e => updSup(i, { role: e.target.value })}
+                className="w-full bg-white border border-slate-300 rounded-xl px-4 py-3 text-slate-800 text-base focus:outline-none focus:border-teal-500 appearance-none">
+                <option value="">選択してください</option>
+                {SUPPORTER_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+              </select>
+              {s.role === "その他" && (
+                <TInput value={s.roleOther} onChange={v => updSup(i, { roleOther: v })} placeholder="役割を入力…" voice />
+              )}
+            </div>
+            <TInput label="氏名" value={s.name} onChange={v => updSup(i, { name: v })} placeholder="鈴木 氏" voice />
+            <TInput label="電話番号" type="tel" value={s.phone} onChange={v => updSup(i, { phone: v })} placeholder="090-xxxx-xxxx" />
+            <TTextarea label="備考" value={s.note} onChange={v => updSup(i, { note: v })} placeholder="所属・連絡可能時間など…" rows={2} voice />
+          </div>
+        </Card>
+      ))}
+      <button onClick={addSup} className="w-full py-3 rounded-2xl border border-dashed border-amber-600/60 text-amber-700 text-sm font-bold active:scale-[0.99] mb-4">＋ 支援者を追加</button>
+    </div>
+  );
+}
+
+// ===== STAFF TASK TAB =====
+function StaffTaskTab({ data, setData }) {
+  const TASK_LABELS = {
+    companion: "同行者確認（天理チーム・身体チーム）",
+    userInfo: "利用者情報登録",
+    reportCheck: "報告書チェックリスト",
+    userTable: "利用者担当表",
+    holidayTable: "祝日振替表",
+    dailyReport: "業務日報（契約項目）",
+    zest: "ZEST入力",
+  };
+  const doneCount = Object.values(data.tasks).filter(v => v === "済").length;
+  const totalCount = Object.keys(data.tasks).length;
+  const undoneTasks = Object.values(data.tasks).filter(v => v === "未").length;
+
+  return (
+    <div className="pb-8 px-4 pt-4">
+      <div className="bg-sky-50 rounded-2xl p-4 mb-4 border border-sky-100 shadow-sm">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-xs text-slate-700 font-semibold">進捗</span>
+          <div className="flex items-center gap-2">
+            {undoneTasks > 0 && (
+              <span className="text-xs font-bold text-amber-700 bg-amber-900/30 border border-amber-700/50 px-2 py-0.5 rounded-full">
+                未 {undoneTasks}件
+              </span>
+            )}
+            <span className="text-teal-700 font-bold text-sm">{doneCount} / {totalCount} 済</span>
+          </div>
+        </div>
+        <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-teal-500 to-emerald-400 rounded-full transition-all duration-500" style={{ width: `${(doneCount / totalCount) * 100}%` }} />
+        </div>
+        {doneCount === totalCount && undoneTasks === 0 && (
+          <p className="text-xs text-emerald-700 font-semibold mt-2 text-center">✓ 全タスク完了</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        {Object.entries(TASK_LABELS).map(([key, label]) => (
+          <div key={key} className={`w-full flex items-center justify-between px-4 py-4 rounded-2xl border transition-all ${data.tasks[key] === "済" ? "bg-teal-100 border-teal-500" : "bg-white border-slate-300"}`}>
+            <div className="flex-1 pr-2 min-w-0">
+              <span className={`font-medium text-sm leading-snug ${data.tasks[key] === "済" ? "text-teal-800" : "text-slate-700"}`}>{label}</span>
+              {data.tasks[key] === "未" && <span className="ml-2 text-[10px] font-bold text-amber-700 bg-amber-100 border border-amber-400 px-1.5 py-0.5 rounded-full">未対応</span>}
+            </div>
+            <div className="flex gap-2 flex-shrink-0">
+              <button
+                onClick={() => setData(p => ({ ...p, tasks: { ...p.tasks, [key]: "済" } }))}
+                className={`px-6 py-4 rounded-xl text-base font-bold border transition-all active:scale-95 min-h-[54px] ${data.tasks[key] === "済" ? "bg-teal-600 border-teal-500 text-white" : "bg-white border-slate-300 text-slate-600"}`}>
+                済
+              </button>
+              <button
+                onClick={() => setData(p => ({ ...p, tasks: { ...p.tasks, [key]: "未" } }))}
+                className={`px-6 py-4 rounded-xl text-base font-bold border transition-all active:scale-95 min-h-[54px] ${data.tasks[key] === "未" ? "bg-teal-600 border-teal-500 text-white" : "bg-white border-slate-200 text-slate-400"}`}>
+                未
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ===== RECORD FORM =====
+function AdlField({ label, value, onChange }) {
+  const SUPPORT = ["要援助","援助不要","未選択"];
+  const LEVEL = ["一部介助","全介助","自立","未選択"];
+  const cls = (opt, sel) => { if (!sel) return "bg-white/5 border-slate-600 text-slate-500"; const m = { "要援助":"bg-orange-900/40 border-orange-500 text-orange-300","援助不要":"bg-green-900/40 border-green-500 text-green-300","全介助":"bg-red-900/40 border-red-500 text-red-300","一部介助":"bg-yellow-900/40 border-yellow-500 text-yellow-300","自立":"bg-blue-900/40 border-blue-500 text-blue-300" }; return m[opt] || "bg-slate-600/40 border-slate-500 text-slate-600"; };
+  return (
+    <div className="p-3 border border-slate-200 rounded-xl bg-slate-200/50 space-y-2">
+      <span className="text-sm font-semibold text-slate-700">{label}</span>
+      {[["援助の要否",SUPPORT,"support"],["介助程度",LEVEL,"level"]].map(([lbl,opts,field])=>(
+        <div key={field} className="space-y-1">
+          <span className="text-xs text-slate-500">{lbl}</span>
+          <div className="flex gap-1.5 flex-wrap">
+            {opts.map(opt => (
+              <button key={opt} type="button" onClick={()=>onChange({...value,[field]:value[field]===opt?"":opt})}
+                className={`px-3 py-3 rounded-lg text-sm font-medium border transition-colors min-h-[48px] ${cls(opt,value[field]===opt)}`}>{opt}</button>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+function CopyableTA({ label, value, onChange, maxLength, rows=4, placeholder, badge }) {
+  const [copied, setCopied] = useState(false);
+  const isOver = maxLength && value.length > maxLength;
+  const copy = async () => { if (!value) return; try { await navigator.clipboard.writeText(value); } catch { const el = document.createElement("textarea"); el.value = value; document.body.appendChild(el); el.select(); document.execCommand("copy"); document.body.removeChild(el); } setCopied(true); setTimeout(() => setCopied(false), 2000); };
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2"><label className="text-sm font-medium text-slate-600">{label}</label>{badge&&<FSBadge/>}</div>
+        {maxLength&&<span className={`text-xs tabular-nums ${isOver?"text-red-600 font-semibold":"text-slate-500"}`}>{value.length}/{maxLength}</span>}
+      </div>
+      <div className="flex gap-2 items-start">
+        <textarea value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} rows={rows}
+          className={`flex-1 bg-slate-700/60 border rounded-xl px-3 py-2.5 text-slate-800 text-sm placeholder-slate-500 focus:outline-none resize-y leading-relaxed ${isOver?"border-red-500":"border-slate-600 focus:border-teal-500"}`} />
+        <VoiceInline onText={t=>onChange(value?value+"\n"+t:t)} />
+      </div>
+      <button type="button" onClick={copy} disabled={!value}
+        className={`w-full py-4 rounded-xl border text-base font-bold transition-all active:scale-[0.99] disabled:opacity-40 flex items-center justify-center gap-2 ${copied ? "bg-teal-100 border-teal-500 text-teal-800" : "bg-white border-slate-300 text-slate-700"}`}>
+        <span className="text-xl">{copied ? "✓" : "📄"}</span>
+        <span>{copied ? "コピーしました" : "iBowにコピー"}</span>
+      </button>
+    </div>
+  );
+}
+function FamilyTable({ members, onChange }) {
+  const upd=(i,f,v)=>onChange(members.map((m,j)=>j===i?{...m,[f]:v}:m));
+  const add=()=>onChange([...members,{name:"",age:"",relationship:"",cohabitation:"",occupation:"",contact:"",mobileContact:"",isKeyPerson:false}]);
+  const rm=(i)=>onChange(members.filter((_,j)=>j!==i));
+  return (
+    <div className="space-y-3">
+      <label className="text-sm font-medium text-slate-600">家族構成</label>
+      {members.length===0&&<p className="text-sm text-slate-500">家族情報がありません。</p>}
+      {members.map((m,i)=>(
+        <div key={i} className="p-3 border border-slate-200 rounded-xl bg-slate-200/50 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-slate-700">{m.name||`家族 ${i+1}`}{m.isKeyPerson&&<span className="ml-2 text-xs bg-teal-100 text-teal-700 px-1.5 py-0.5 rounded-full">KP</span>}</span>
+            <button type="button" onClick={()=>rm(i)} className="h-8 w-8 flex items-center justify-center text-red-600 rounded-lg">✕</button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {[["氏名","name","山田 花子"],["年齢","age","65歳"],["続柄","relationship","長男"],["同居/別居","cohabitation","同居"],["職業","occupation","会社員"],["固定電話","contact","0742-00-0000"],["携帯電話","mobileContact","090-0000-0000"]].map(([lbl,field,ph])=>(
+              <div key={field} className="space-y-1">
+                <label className="text-xs text-slate-500">{lbl}</label>
+                <input value={m[field]} onChange={e=>upd(i,field,e.target.value)} placeholder={ph}
+                  className="w-full bg-slate-700/60 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 text-sm placeholder-slate-500 focus:outline-none focus:border-teal-500" />
+              </div>
+            ))}
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={m.isKeyPerson} onChange={e=>upd(i,"isKeyPerson",e.target.checked)} className="w-4 h-4 accent-teal-500" />
+            <span className="text-sm text-slate-600">キーパーソン</span>
+          </label>
+        </div>
+      ))}
+      <button type="button" onClick={add} className="w-full h-11 rounded-xl border border-dashed border-slate-600 text-slate-500 text-sm hover:border-teal-600 hover:text-teal-700 transition-colors">＋ 家族を追加</button>
+    </div>
+  );
+}
+function InstTable({ institutions, onChange }) {
+  const upd=(i,f,v)=>onChange(institutions.map((m,j)=>j===i?{...m,[f]:v}:m));
+  const add=()=>onChange([...institutions,{name:"",phone:"",contact:""}]);
+  const rm=(i)=>onChange(institutions.filter((_,j)=>j!==i));
+  return (
+    <div className="space-y-3">
+      <label className="text-sm font-medium text-slate-600">関連機関</label>
+      {institutions.length===0&&<p className="text-sm text-slate-500">関連機関情報がありません。</p>}
+      {institutions.map((inst,i)=>(
+        <div key={i} className="p-3 border border-slate-200 rounded-xl bg-slate-200/50 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-slate-700">{inst.name||`機関 ${i+1}`}</span>
+            <button type="button" onClick={()=>rm(i)} className="h-8 w-8 flex items-center justify-center text-red-600 rounded-lg">✕</button>
+          </div>
+          {[["機関名","name","○○病院"],["担当者","contact","田中先生"]].map(([lbl,field,ph])=>(
+            <div key={field} className="space-y-1">
+              <label className="text-xs text-slate-500">{lbl}</label>
+              <input value={inst[field]} onChange={e=>upd(i,field,e.target.value)} placeholder={ph}
+                className="w-full bg-slate-700/60 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 text-sm placeholder-slate-500 focus:outline-none focus:border-teal-500" />
+            </div>
+          ))}
+        </div>
+      ))}
+      <button type="button" onClick={add} className="w-full h-11 rounded-xl border border-dashed border-slate-600 text-slate-500 text-sm hover:border-teal-600 hover:text-teal-700">＋ 機関を追加</button>
+    </div>
+  );
+}
+function LevelSel({ label, options, value, onChange, descriptions }) {
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-medium text-slate-600">{label}</label>
+      <div className="flex flex-wrap gap-2">
+        {options.map(opt=>(
+          <button key={opt} type="button" onClick={()=>onChange(value===opt?"":opt)}
+            className={`px-4 py-3 rounded-lg text-sm font-medium border min-h-[48px] ${value===opt?"bg-teal-600 border-teal-500 text-white":"bg-white border-slate-300 text-slate-600"}`}>{opt}</button>
+        ))}
+      </div>
+      {value&&descriptions?.[value]&&<p className="text-xs text-slate-500 bg-slate-700/40 rounded-lg px-3 py-2">{descriptions[value]}</p>}
+    </div>
+  );
+}
+function SectionCard({ title, children, defaultOpen=true }) {
+  const [open,setOpen]=useState(defaultOpen);
+  return (
+    <div className="rounded-2xl border border-slate-200 overflow-hidden mb-4">
+      <button type="button" className="w-full flex items-center justify-between px-4 py-3.5 bg-slate-50 hover:bg-slate-100 transition-colors" onClick={()=>setOpen(!open)}>
+        <span className="text-sm font-semibold text-teal-700">{title}</span>
+        <span className="text-slate-500 text-sm">{open?"▲":"▼"}</span>
+      </button>
+      {open&&<div className="p-4 space-y-4 bg-white">{children}</div>}
+    </div>
+  );
+}
+
+function RecordFormPage({ toast, fs, sharedPrescriptionPhoto }) {
+  const [transcriptText, setTranscriptText] = useState("");
+  const [fields, setFields] = useState(emptyRecord());
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [hasExtracted, setHasExtracted] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const fileRef = useRef();
+
+  useEffect(() => {
+    if (!fs.extractedAt) return;
+    setFields(prev => ({
+      ...prev,
+      name: fs.userName || prev.name,
+      nameKana: fs.nameKana || prev.nameKana,
+      gender: fs.gender || prev.gender,
+      age: fs.age || prev.age,
+      birthDate: fs.birthDate || prev.birthDate,
+      address: fs.address || prev.address,
+      phone: fs.phone || prev.phone,
+      mobilePhone: fs.mobilePhone || prev.mobilePhone,
+      mainDiagnosis: fs.mainDiagnosis || prev.mainDiagnosis,
+      medicalHistory: fs.medicalHistory || prev.medicalHistory,
+      currentCondition: fs.currentCondition || prev.currentCondition,
+      diseaseAwareness: fs.diseaseAwareness || prev.diseaseAwareness,
+      familyMembers: fs.familyMembers?.length ? fs.familyMembers : prev.familyMembers,
+      familySpecialNotes: fs.familySpecialNotes || prev.familySpecialNotes,
+      patientRequest: fs.patientRequest || prev.patientRequest,
+      familyRequest: fs.familyRequest || prev.familyRequest,
+      referralRequest: fs.referralRequest || prev.referralRequest,
+      otherServices: fs.otherServices || prev.otherServices,
+      handoverNotes: fs.handoverNotes || prev.handoverNotes,
+      bedrideLevel: fs.bedrideLevel || prev.bedrideLevel,
+      dementiaLevel: fs.dementiaLevel || prev.dementiaLevel,
+      relatedInstitutions: fs.relatedInstitutions?.length ? fs.relatedInstitutions.map(inst => ({ name: inst.name || "", contact: inst.contact || "" })) : prev.relatedInstitutions,
+    }));
+    setHasExtracted(true);
+  }, [fs.extractedAt]);
+
+  const handleExtract = async () => {
+    if (!transcriptText.trim() && uploadedFiles.length === 0) { toast.error("テキストまたはファイルを入力してください"); return; }
+    setIsExtracting(true);
+    try {
+      const content = [];
+      uploadedFiles.filter(f => f.mimeType?.startsWith("image/")).forEach(f => content.push({ type: "image", source: { type: "base64", media_type: f.mimeType, data: f.data } }));
+      content.push({ type: "text", text: `以下の情報から訪問看護記録書Ⅰの各項目を抽出してJSONのみ返してください。\n\n${transcriptText}\n\nキー（フェイスシートに明記されている情報のみ抽出。AIによる推定・アセスメント・補足は含めない）：name,nameKana,gender,age,birthDate,address,phone,mobilePhone,firstVisitDate,mainDiagnosis,stationName,recorder,recordDate,medicalHistory(360字以内・記載内容のみ),currentCondition(440字以内・記載内容のみ),diseaseAwareness(280字以内・記載内容のみ),familySpecialNotes(280字以内),patientRequest(273字以内),familyRequest(273字以内),referralRequest(273字以内),otherServices(320字以内),handoverNotes(800字以内),bedrideLevel,dementiaLevel` });
+      const res = await fetch("https://hinata-app-production.up.railway.app/api/claude", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 2000, messages: [{ role: "user", content }] }) });
+      const d = await res.json();
+      const r = JSON.parse(d.content?.map(b => b.text || "").join("").replace(/```json|```/g, "").trim());
+      setFields(prev => ({ ...prev, ...Object.fromEntries(Object.entries(r).map(([k, v]) => [k, v ?? prev[k]])) }));
+      setHasExtracted(true);
+      toast.success("AI抽出完了。各項目を確認してください。");
+    } catch { toast.error("AI抽出に失敗しました。"); }
+    finally { setIsExtracting(false); }
+  };
+
+  const addFiles = e => Array.from(e.target.files || []).forEach(f => { const r = new FileReader(); r.onload = ev => setUploadedFiles(p => [...p, { name: f.name, mimeType: f.type, data: ev.target.result.split(",")[1], preview: f.type.startsWith("image/") ? ev.target.result : null }]); r.readAsDataURL(f); });
+  const setF = key => v => setFields(p => ({ ...p, [key]: v }));
+  const hasFS = !!fs.extractedAt;
+
+  return (
+    <div className="pb-24 px-4 pt-4">
+      {hasFS && (
+        <div className="bg-teal-50 border border-teal-300 rounded-2xl p-3 mb-4 flex items-center gap-3">
+          <span className="text-xl">✦</span>
+          <div><p className="text-xs font-bold text-teal-700">フェイスシートの内容が反映されています</p><p className="text-xs text-slate-500 mt-0.5">各項目を確認・修正してiBowにコピーしてください</p></div>
+        </div>
+      )}
+      {sharedPrescriptionPhoto && (
+        <div className="bg-amber-900/20 border border-amber-700/40 rounded-2xl p-3 mb-4 flex items-center gap-3">
+          <img src={sharedPrescriptionPhoto} className="w-14 h-14 rounded-xl object-cover border-2 border-amber-600/50 flex-shrink-0" />
+          <div>
+            <p className="text-xs font-bold text-amber-700">処方内容の写真が反映されています</p>
+            <p className="text-xs text-slate-500 mt-0.5">契約チェックで撮影した処方内容です</p>
+          </div>
+        </div>
+      )}
+      <div className="bg-slate-200/60 rounded-2xl border border-slate-200 overflow-hidden mb-4">
+        <div className="px-4 py-3 bg-slate-50 flex items-center justify-between">
+          <span className="text-sm font-semibold text-teal-700">🔍 追加情報でAI補完</span>
+          <span className="text-xs text-slate-500">FS以外の補足情報</span>
+        </div>
+        <div className="p-4 space-y-4">
+          <div>
+            <button type="button" onClick={() => fileRef.current?.click()} className="w-full py-3 border-2 border-dashed border-slate-600 rounded-xl text-slate-500 text-sm font-medium hover:border-teal-600 hover:text-teal-700 transition-colors">📎 追加ファイル・写真</button>
+            <input ref={fileRef} type="file" accept="image/*,application/pdf" multiple className="hidden" onChange={addFiles} />
+            {uploadedFiles.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">{uploadedFiles.map((f, i) => (
+                <div key={i} className="flex items-center gap-1 bg-slate-700 px-2 py-1 rounded-lg text-xs text-slate-600">
+                  {f.preview ? <img src={f.preview} className="w-5 h-5 rounded object-cover" /> : "📄"}
+                  <span className="max-w-[80px] truncate">{f.name}</span>
+                  <button onClick={() => setUploadedFiles(p => p.filter((_, j) => j !== i))} className="text-slate-500 hover:text-red-600 ml-1">✕</button>
+                </div>
+              ))}</div>
+            )}
+          </div>
+          <TTextarea label="補足テキスト" value={transcriptText} onChange={setTranscriptText} placeholder="面談メモ・FSに記載のない追加情報など…" rows={4} voice />
+          <button onClick={handleExtract} disabled={isExtracting || (!transcriptText.trim() && uploadedFiles.length === 0)}
+            className="w-full h-11 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.99]">
+            {isExtracting ? <><span className="animate-spin">⏳</span>抽出中…</> : <>✨ 追加情報をAI抽出</>}
+          </button>
+        </div>
+      </div>
+      {hasExtracted ? (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-slate-600">各項目（編集・コピー可）</h2>
+            <button onClick={() => { setFields(emptyRecord()); setHasExtracted(false); setTranscriptText(""); setUploadedFiles([]); }} className="text-xs text-slate-500 border border-slate-200 px-3 py-1.5 rounded-lg active:scale-95">🔄 リセット</button>
+          </div>
+          <SectionCard title="■ 病歴・病状">
+            <CopyableTA label="既往歴及び現病歴" value={fields.medicalHistory} onChange={setF("medicalHistory")} maxLength={360} rows={5} placeholder="（360字以内）" badge={hasFS&&!!fs.medicalHistory}/>
+            <CopyableTA label="病状・治療状態・処方内容" value={fields.currentCondition} onChange={setF("currentCondition")} maxLength={440} rows={5} placeholder="（440字以内）" badge={hasFS&&!!fs.currentCondition}/>
+            <CopyableTA label="病識の有無/程度" value={fields.diseaseAwareness} onChange={setF("diseaseAwareness")} maxLength={280} rows={3} placeholder="（280字以内）" badge={hasFS&&!!fs.diseaseAwareness}/>
+          </SectionCard>
+          <SectionCard title="■ 家族構成">
+            <FamilyTable members={fields.familyMembers} onChange={m=>setFields(p=>({...p,familyMembers:m}))}/>
+            <CopyableTA label="家族構成特記事項" value={fields.familySpecialNotes} onChange={setF("familySpecialNotes")} maxLength={280} rows={3} placeholder="（280字以内）" badge={hasFS&&!!fs.familySpecialNotes}/>
+          </SectionCard>
+          <SectionCard title="■ 訪問看護の依頼目的">
+            <CopyableTA label="本人の要望" value={fields.patientRequest} onChange={setF("patientRequest")} maxLength={273} rows={3} placeholder="（273字以内）" badge={hasFS&&!!fs.patientRequest}/>
+            <CopyableTA label="家族の要望" value={fields.familyRequest} onChange={setF("familyRequest")} maxLength={273} rows={3} placeholder="（273字以内）" badge={hasFS&&!!fs.familyRequest}/>
+            <CopyableTA label="依頼機関の要望" value={fields.referralRequest} onChange={setF("referralRequest")} maxLength={273} rows={3} placeholder="（273字以内）" badge={hasFS&&!!fs.referralRequest}/>
+          </SectionCard>
+          <SectionCard title="■ ADLの状況">
+            {[["食生活","adlEating"],["清潔","adlHygiene"],["排泄","adlToileting"],["睡眠","adlSleep"],["生活のリズム","adlDailyRhythm"],["服薬状況","adlMedication"],["金銭管理","adlFinance"],["デイケア・作業所","adlDayCare"],["対人関係","adlInterpersonal"],["看護師とのコミュニケーション","adlNurseComm"]].map(([lbl,key])=>(
+              <AdlField key={key} label={lbl} value={fields[key]} onChange={v=>setFields(p=>({...p,[key]:v}))}/>
+            ))}
+          </SectionCard>
+          <SectionCard title="■ 日常生活自立度">
+            <LevelSel label="寝たきり度" options={BEDRIDE_OPT} value={fields.bedrideLevel} onChange={v=>setFields(p=>({...p,bedrideLevel:v}))} descriptions={BEDRIDE_DESC}/>
+            <LevelSel label="認知症の状況" options={DEMENTIA_OPT} value={fields.dementiaLevel} onChange={v=>setFields(p=>({...p,dementiaLevel:v}))} descriptions={DEMENTIA_DESC}/>
+          </SectionCard>
+          <SectionCard title="■ 関連機関">
+            <InstTable institutions={fields.relatedInstitutions} onChange={v=>setFields(p=>({...p,relatedInstitutions:v}))}/>
+          </SectionCard>
+          <SectionCard title="■ その他・申し送り">
+            <CopyableTA label="その他サービスの利用状況" value={fields.otherServices} onChange={setF("otherServices")} maxLength={320} rows={4} placeholder="（320字以内）" badge={hasFS&&!!fs.otherServices}/>
+            <CopyableTA label="スタッフへの申し送り事項" value={fields.handoverNotes} onChange={setF("handoverNotes")} maxLength={800} rows={8} placeholder="（800字以内）" badge={hasFS&&!!fs.handoverNotes}/>
+          </SectionCard>
+        </div>
+      ) : (
+        <div className="text-center py-16 text-slate-500">
+          <div className="text-5xl mb-4 opacity-30">📋</div>
+          <p className="text-sm leading-relaxed">ヘッダーの <span className="text-amber-700 font-bold">📄 FSスキャン</span> から<br/>フェイスシートを読み取ると自動入力されます</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ===== PROGRESS HELPERS =====
+// 進捗状態を返す：{ done, total, hasUndone }
+// done: 済の数, total: 全体, hasUndone: 未が1つ以上あるか
+function calcContractProgress(d) {
+  const bi = d.basicInfo || {};
+  const isKaigo = d.visitType === "介護保険";
+  const items = [
+    !!bi.userName, !!bi.birthDate, !!bi.address, !!bi.contractDate,
+    d.visitType !== "", d.welfare !== "", d.visitPlace !== "",
+    d.team !== "",
+    d.importantDoc === "済", d.transport !== "",
+    d.insuranceCard !== "未", d.careInsurance !== "未",
+    d.burdenRatio !== "未", d.selfSupport !== "未", d.limitAmount !== "未",
+    d.handbooks?.some(h => h.status !== "未"),
+    d.aplus === "済" || d.aplus === "生活保護",
+    d.prescription === "済" || d.prescription === "処方なし",
+    d.instruction === "済", !!d.instructionDest, !!d.instructionDoctor,
+    !!d.instructionDate, !!d.instructionStart, !!d.instructionReason,
+    d.namestyle !== "",
+    d.cautionVisitTime, d.cautionTeam, d.cautionStayTime, d.cautionHoliday,
+    ...(isKaigo ? [d.cautionCareInsNurse, d.cautionCareInsReport] : []),
+  ];
+  const done = items.filter(Boolean).length;
+  const total = items.length;
+  const hasUndone = [
+    !bi.userName, !bi.birthDate, !bi.address, !bi.contractDate,
+    d.visitType === "", d.welfare === "", d.visitPlace === "", d.team === "",
+    d.importantDoc === "未", d.transport === "",
+    d.insuranceCard === "未", d.careInsurance === "未",
+    d.burdenRatio === "未", d.selfSupport === "未", d.limitAmount === "未",
+    d.handbooks?.every(h => h.status === "未"),
+    d.aplus === "未",
+    d.prescription === "未",
+    d.instruction === "未", !d.instructionDest, !d.instructionDoctor,
+    !d.instructionDate, !d.instructionStart, !d.instructionReason,
+    d.namestyle === "",
+    !d.cautionVisitTime, !d.cautionTeam, !d.cautionStayTime, !d.cautionHoliday,
+  ].some(Boolean);
+  return { done, total, hasUndone };
+}
+
+function calcEmergencyProgress(d) {
+  const items = [];
+  // 家族
+  if (d.familyMode === "有") {
+    d.family.forEach(f => { items.push(!!f.name); items.push(!!f.phone); });
+  }
+  // 主治医
+  items.push(!!d.doctor.hospital);
+  // 支援者
+  d.supporters.forEach(s => { if (s.name || s.role) items.push(!!s.name); });
+  const done = items.filter(Boolean).length;
+  const total = Math.max(items.length, 1);
+  const hasUndone = items.some(v => !v);
+  return { done, total, hasUndone };
+}
+
+function calcTaskProgress(d) {
+  const vals = Object.values(d.tasks);
+  const done = vals.filter(v => v === "済").length;
+  const total = vals.length;
+  const hasUndone = vals.some(v => v === "未");
+  return { done, total, hasUndone };
+}
+
+// タブバッジコンポーネント
+function TabBadge({ done, total, hasUndone }) {
+  if (done === 0 && total > 0) {
+    // 何も済んでいない
+    return <span className="absolute top-1.5 right-2 w-2.5 h-2.5 rounded-full bg-red-500 border border-slate-900" />;
+  }
+  if (hasUndone) {
+    // 一部未完了
+    return <span className="absolute top-1.5 right-2 w-2.5 h-2.5 rounded-full bg-amber-400 border border-slate-900" />;
+  }
+  if (done === total && total > 0) {
+    // 全て済
+    return <span className="absolute top-1.5 right-2 text-[10px] leading-none">✅</span>;
+  }
+  return null;
+}
+
+// ===== CONTRACT PAGE (inner tabs) =====
+function ContractPage({ fs, toast, onPrescriptionPhoto }) {
+  const [activeTab, setActiveTab] = useState("contract");
+  const [contractData, setContractData] = useState(initContract());
+  const [emergencyData, setEmergencyData] = useState(initEmergency());
+  const [staffTaskData, setStaffTaskData] = useState(initOffice());
+
+  useEffect(() => {
+    if (!fs.extractedAt) return;
+    // 利用者名のみ反映
+    setContractData(p => ({
+      ...p,
+      basicInfo: {
+        ...p.basicInfo,
+        ...(fs.userName    ? { userName:    fs.userName    } : {}),
+        ...(fs.birthDate   ? { birthDate:   fs.birthDate   } : {}),
+        ...(fs.phone       ? { phone:       fs.phone       } : {}),
+        ...(fs.mobilePhone ? { mobilePhone: fs.mobilePhone } : {}),
+        ...(fs.address     ? { address:     fs.address     } : {}),
+      }
+    }));
+    // 指示書：依頼先・主治医
+    if (fs.doctorHospital) setContractData(p => ({ ...p, instructionDest: fs.doctorHospital, instructionDoctor: fs.doctorName || "" }));
+    // 緊急：家族
+    if (fs.familyContact) setEmergencyData(p => ({ ...p, familyMode: "有", family: [{ name: fs.familyContact, relation: "", relationOther: "", phone: fs.familyPhone || "", note: "" }, ...p.family.slice(1)] }));
+    // 緊急：主治医
+    if (fs.doctorHospital) setEmergencyData(p => ({ ...p, doctor: { hospital: fs.doctorHospital, doctorName: fs.doctorName || "" } }));
+    // 緊急：支援者（依頼元 + その他支援者）
+    const newSupporters = [];
+    if (fs.referralSource) newSupporters.push({ role: "", roleOther: "依頼元", name: fs.referralSource, phone: fs.referralPhone || "", note: "" });
+    if (fs.supporters?.length) {
+      fs.supporters.forEach(s => newSupporters.push({ role: s.role || "", roleOther: "", name: s.name || "", phone: s.phone || "", note: s.note || "" }));
+    }
+    if (newSupporters.length) setEmergencyData(p => ({ ...p, supporters: [...newSupporters, { role: "", roleOther: "", name: "", phone: "", note: "" }] }));
+  }, [fs.extractedAt]);
+
+  // 進捗計算
+  const cprog = calcContractProgress(contractData);
+  const eprog = calcEmergencyProgress(emergencyData);
+  const tprog = calcTaskProgress(staffTaskData);
+
+  const TABS = [
+    { id: "contract",  label: "契約チェック", icon: "📋", prog: cprog },
+    { id: "emergency", label: "緊急連絡先",   icon: "📞", prog: eprog },
+    { id: "staff",     label: "タスク",       icon: "✅", prog: tprog },
+  ];
+
+  return (
+    <div>
+      {/* 利用者名 + 全体進捗バー */}
+      <div className="flex items-center justify-between px-4 py-2 bg-slate-200/50 border-b border-slate-700/50">
+        <div>
+          {contractData.basicInfo.userName
+            ? <span className="text-sm text-teal-700 font-semibold">{contractData.basicInfo.userName}{contractData.basicInfo.contractDate && <span className="text-slate-500 font-normal text-xs ml-2">{contractData.basicInfo.contractDate}</span>}</span>
+            : <span className="text-xs text-slate-500">利用者名未入力</span>}
+        </div>
+        {/* 3タブまとめた全体サマリー */}
+        <div className="flex items-center gap-2">
+          {cprog.hasUndone || eprog.hasUndone || tprog.hasUndone
+            ? <span className="text-xs font-bold text-amber-700">未完了あり</span>
+            : cprog.done === cprog.total && eprog.done > 0 && tprog.done === tprog.total
+            ? <span className="text-xs font-bold text-emerald-700">✓ 全完了</span>
+            : <span className="text-xs text-slate-500">{cprog.done + eprog.done + tprog.done} / {cprog.total + eprog.total + tprog.total} 済</span>
+          }
+        </div>
+      </div>
+      <div className="h-1 bg-slate-200">
+        <div className="h-full bg-gradient-to-r from-teal-500 to-emerald-400 transition-all duration-500"
+          style={{ width: `${(cprog.total + eprog.total + tprog.total) > 0 ? ((cprog.done + eprog.done + tprog.done) / (cprog.total + eprog.total + tprog.total) * 100) : 0}%` }} />
+      </div>
+
+      {/* タブバー（バッジ付き） */}
+      <div className="flex border-b border-slate-700 bg-slate-200/30">
+        {TABS.map(tab => {
+          const { done, total, hasUndone } = tab.prog;
+          const allDone = done === total && total > 0 && !hasUndone;
+          const noneOrUndone = hasUndone && done === 0;
+          return (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 py-3 text-sm font-bold transition-all flex flex-col items-center gap-0.5 relative ${activeTab === tab.id ? "text-white bg-teal-600 rounded-xl shadow-md" : "text-slate-500 bg-white border border-slate-200 rounded-xl"}`}>
+              <span className="text-sm leading-none">{tab.icon}</span>
+              <span>{tab.label}</span>
+              {/* バッジ: 全済=✅緑、未あり=🔴赤、一部=🟡黄 */}
+              {allDone && (
+                <span className="absolute top-1 right-1.5 w-2 h-2 rounded-full bg-emerald-400 border border-slate-900" />
+              )}
+              {!allDone && hasUndone && done > 0 && (
+                <span className="absolute top-1 right-1.5 w-2 h-2 rounded-full bg-amber-400 border border-slate-900" />
+              )}
+              {!allDone && (done === 0 || (!hasUndone && done < total)) && total > 0 && (
+                <span className="absolute top-1 right-1.5 w-2 h-2 rounded-full bg-red-500 border border-slate-900" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {activeTab === "contract" && <ContractTab data={contractData} setData={setContractData} fs={fs} onPrescriptionPhoto={onPrescriptionPhoto} toast={toast} />}
+      {activeTab === "emergency" && <EmergencyTab data={emergencyData} setData={setEmergencyData} fs={fs} contractData={contractData} toast={toast} />}
+      {activeTab === "staff" && <StaffTaskTab data={staffTaskData} setData={setStaffTaskData} />}
+    </div>
+  );
+}
+
+// ===== MAIN APP =====
+const MAIN_TABS = [
+  { id: "contract", label: "契約チェック", icon: "📋" },
+  { id: "record",   label: "記録書Ⅰ",     icon: "📝" },
+];
+
+function App() {
+  const [mainTab, setMainTab] = useState("contract");
+  const [showFS, setShowFS] = useState(false);
+  const [faceSheet, setFaceSheet] = useState(emptyFS());
+  const [sharedPrescriptionPhoto, setSharedPrescriptionPhoto] = useState(null);
+  const toast = useToast();
+  const [now, setNow] = useState(new Date());
+  useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t); }, []);
+  const fmtDate = d => { const days = ["日","月","火","水","木","金","土"]; return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日(${days[d.getDay()]})`; };
+  const handleFSExtracted = useCallback(data => setFaceSheet(data), []);
+
+  // 医療機関1 → 緊急連絡先の主治医に自動反映
+  const nv0hospital = contractData.nextVisits && contractData.nextVisits[0] ? contractData.nextVisits[0].hospital : "";
+  const nv0doctor = contractData.nextVisits && contractData.nextVisits[0] ? contractData.nextVisits[0].doctor : "";
+  useEffect(() => {
+    if (!nv0hospital && !nv0doctor) return;
+    setEmergencyData(p => ({
+      ...p,
+      doctor: {
+        hospital: nv0hospital || (p.doctor && p.doctor.hospital) || "",
+        doctorName: nv0doctor || (p.doctor && p.doctor.doctorName) || "",
+      }
+    }));
+  }, [nv0hospital, nv0doctor]);
+
+  return (
+    <div className="min-h-screen bg-slate-200 text-slate-800" style={{ fontFamily: "'Noto Sans JP','Hiragino Kaku Gothic ProN',sans-serif" }}>
+      <Toasts toasts={toast.toasts} />
+      {showFS && <FSModal onClose={() => setShowFS(false)} onExtracted={handleFSExtracted} toast={toast} />}
+
+      {/* Header */}
+      <header className="sticky top-0 z-30 bg-white backdrop-blur border-b border-slate-200 shadow-sm">
+        {/* 1行目：ロゴ＋アプリ名 / 日時 */}
+        <div className="px-3 pt-2 pb-1.5 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <img src="data:image/png;base64,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" alt="ひなた" className="w-8 h-8 rounded-lg flex-shrink-0 object-cover shadow-sm" />
+            <div className="min-w-0">
+              <p className="text-[10px] text-slate-500 font-semibold tracking-[0.2em] uppercase">ひなた</p>
+              <h1 className="text-sm font-bold text-slate-800 leading-tight whitespace-nowrap">契約・看護記録Ⅰアプリ</h1>
+            </div>
+          </div>
+          <div className="text-right flex-shrink-0">
+            <div className="text-[10px] font-bold text-slate-600 leading-tight">{fmtDate(now)}</div>
+            <div className="text-[11px] text-teal-700 tabular-nums">{String(now.getHours()).padStart(2,"0")}:{String(now.getMinutes()).padStart(2,"0")}</div>
+          </div>
+        </div>
+        {/* 2行目：FSスキャンボタン（全幅） */}
+        <div className="px-3 pb-2">
+          <button onClick={() => setShowFS(true)}
+            className={`w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-base border transition-all active:scale-95 ${faceSheet.extractedAt ? "bg-teal-100 border-teal-600 text-teal-800" : "bg-amber-100 border-amber-400 text-amber-800"}`}>
+            <span className="text-2xl leading-none">📄</span>
+            <span>{faceSheet.extractedAt ? "FS反映済 ✦ タップして再スキャン" : "📋 フェイスシートをスキャン"}</span>
+          </button>
+        </div>
+        {faceSheet.extractedAt && (
+          <div className="px-3 pb-2 flex items-center gap-2">
+            <div className="flex-1 h-0.5 bg-teal-100 rounded-full overflow-hidden"><div className="h-full w-full bg-gradient-to-r from-teal-500 to-emerald-400" /></div>
+            <span className="text-[10px] text-teal-800 font-semibold flex-shrink-0">FS読み取り済 ✦ 両画面に反映中</span>
+          </div>
+        )}
+      </header>
+
+      {/* Content */}
+      <div className="max-w-lg mx-auto">
+        {mainTab === "contract" && <ContractPage fs={faceSheet} toast={toast} onPrescriptionPhoto={setSharedPrescriptionPhoto} />}
+        {mainTab === "record"   && <RecordFormPage toast={toast} fs={faceSheet} sharedPrescriptionPhoto={sharedPrescriptionPhoto} />}
+      </div>
+
+      {/* Bottom Nav */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-md">
+        <div className="flex max-w-lg mx-auto">
+          {MAIN_TABS.map(tab => (
+            <button key={tab.id} onClick={() => setMainTab(tab.id)}
+              className={`flex-1 flex flex-col items-center gap-1 py-3 px-2 transition-all active:scale-95 relative ${mainTab === tab.id ? "text-teal-700 bg-teal-50 rounded-xl mx-1" : "text-slate-400"}`}>
+              <span className={`text-2xl leading-none transition-transform ${mainTab === tab.id ? "scale-115" : "scale-100"}`}>{tab.icon}</span>
+              <span className="text-[11px] font-bold tracking-tight">{tab.label}</span>
+              {mainTab === tab.id && <div className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-0.5 bg-teal-400 rounded-full" />}
+              {faceSheet.extractedAt && <div className="absolute top-2 right-3 w-2 h-2 bg-teal-400 rounded-full" />}
+            </button>
+          ))}
+        </div>
+      </nav>
+      <div className="h-20" />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+setTimeout(() => {
+  const splash = document.getElementById('splash');
+  if (splash) { splash.style.opacity = '0'; setTimeout(() => splash.remove(), 600); }
+}, 1800);
+</script>
+</body>
+</html>
