@@ -2321,17 +2321,18 @@ async function driveDeleteData(patientId) {
     const res = await fetch(RAILWAY + '/api/delete-data/' + patientId, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ patientId }),
     });
+    if (!res.ok) return false;
     const result = await res.json();
-    return result.success;
-  } catch (e) { return false; }
+    return result.success === true;
+  } catch (e) { console.error('Drive削除エラー:', e); return false; }
 }
 
 
 function PatientSelectScreen({ onSelect, onNew, user, onLogout }) {
   const [patients, setPatients] = React.useState(loadPatients);
   const [confirmDelete, setConfirmDelete] = React.useState(null);
+  const [confirmDelete2, setConfirmDelete2] = React.useState(null); // 2段階目確認
   const [syncing, setSyncing] = React.useState(false);
   const [syncError, setSyncError] = React.useState('');
 
@@ -2428,14 +2429,22 @@ function PatientSelectScreen({ onSelect, onNew, user, onLogout }) {
     driveSaveData(id, p, { contractData: null, emergencyData: null, taskData: null, recordData: null });
     onNew(p);
   };
-  const confirmDel = () => {
-    if (!confirmDelete) return;
-    const updated = patients.filter(p => p.id !== confirmDelete.id);
-    savePatients(updated);
-    deletePatientData(confirmDelete.id);
-    driveDeleteData(confirmDelete.id); // Driveからも削除
-    setPatients(updated);
+  const confirmDel = async (target) => {
+    const t = target || confirmDelete;
+    if (!t) return;
     setConfirmDelete(null);
+    setConfirmDelete2(null);
+    const target2 = t; // 先にダイアログを閉じる
+    const updated = patients.filter(p => p.id !== target2.id);
+    savePatients(updated);
+    deletePatientData(target2.id);
+    setPatients(updated);
+    // Driveから削除（awaitで完了を待つ）
+    const ok = await driveDeleteData(target2.id);
+    if (!ok) {
+      // 失敗した場合はリトライ
+      setTimeout(() => driveDeleteData(target2.id), 2000);
+    }
   };
   return (
     React.createElement('div', { className: "min-h-screen", style: { background: "#ffe0b2", fontFamily: "'Noto Sans JP', sans-serif" } },
@@ -2519,11 +2528,23 @@ function PatientSelectScreen({ onSelect, onNew, user, onLogout }) {
       ),
       confirmDelete && React.createElement('div', { className: "fixed inset-0 z-50 flex items-center justify-center bg-black/50", onClick: () => setConfirmDelete(null) },
         React.createElement('div', { className: "bg-white rounded-2xl p-6 mx-4 max-w-sm w-full shadow-2xl", onClick: e => e.stopPropagation() },
-          React.createElement('h3', { className: "font-bold text-stone-800 text-base mb-2" }, "利用者データを削除"),
-          React.createElement('p', { className: "text-sm text-stone-800 mb-5" }, "「" + (confirmDelete.name || '氏名未入力') + "」のデータを完全に削除します。この操作は元に戻せません。"),
+          React.createElement('h3', { className: "font-bold text-stone-800 text-base mb-2" }, "⚠️ 利用者データを削除"),
+          React.createElement('p', { className: "text-sm text-stone-600 mb-2" }, "「" + (confirmDelete.name || '氏名未入力') + "」を削除しようとしています。"),
+          React.createElement('p', { className: "text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2 mb-5" }, "この操作はアプリとGoogle Driveの両方からデータを削除します。元に戻せません。"),
           React.createElement('div', { className: "flex gap-3" },
             React.createElement('button', { onClick: () => setConfirmDelete(null), className: "flex-1 py-3 rounded-xl border border-stone-400 text-stone-700 font-bold" }, "キャンセル"),
-            React.createElement('button', { onClick: confirmDel, className: "flex-1 py-3 rounded-xl bg-red-500 text-white font-bold" }, "削除する")
+            React.createElement('button', { onClick: () => { setConfirmDelete2(confirmDelete); setConfirmDelete(null); }, className: "flex-1 py-3 rounded-xl bg-orange-500 text-white font-bold" }, "次へ →")
+          )
+        )
+      ),
+      confirmDelete2 && React.createElement('div', { className: "fixed inset-0 z-50 flex items-center justify-center bg-black/50", onClick: () => setConfirmDelete2(null) },
+        React.createElement('div', { className: "bg-white rounded-2xl p-6 mx-4 max-w-sm w-full shadow-2xl", onClick: e => e.stopPropagation() },
+          React.createElement('h3', { className: "font-bold text-red-600 text-base mb-2" }, "🗑️ 最終確認"),
+          React.createElement('p', { className: "text-sm text-stone-800 font-bold mb-1" }, "「" + (confirmDelete2.name || '氏名未入力') + "」"),
+          React.createElement('p', { className: "text-sm text-stone-600 mb-5" }, "本当に完全削除してよいですか？この操作は取り消せません。"),
+          React.createElement('div', { className: "flex gap-3" },
+            React.createElement('button', { onClick: () => setConfirmDelete2(null), className: "flex-1 py-3 rounded-xl border border-stone-400 text-stone-700 font-bold" }, "やめる"),
+            React.createElement('button', { onClick: () => { setConfirmDelete(confirmDelete2); setConfirmDelete2(null); confirmDel(); }, className: "flex-1 py-3 rounded-xl bg-red-600 text-white font-bold" }, "完全に削除する")
           )
         )
       )
