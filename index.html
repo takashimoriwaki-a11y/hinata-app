@@ -3118,7 +3118,120 @@ function isDeletedId(id) {
     return ids.includes(id);
   } catch(e) { return false; }
 }
+// ===== 書類写真の永続化（IndexedDB） =====
+// 写真はbase64で大きく、localStorage（約5MB）をすぐ超過する。
+// 超過時に写真が無音で削除される不具合があったため、写真はIndexedDB（容量大）に保存し、
+// localStorageには写真を除いたデータのみを保存する。
+const _PHOTO_DB = 'hinata_photos';
+const _PHOTO_STORE = 'photos';
+let _photoDbPromise = null;
+function _openPhotoDb() {
+  if (_photoDbPromise) return _photoDbPromise;
+  _photoDbPromise = new Promise((resolve, reject) => {
+    try {
+      if (!window.indexedDB) { reject(new Error('IndexedDB非対応')); return; }
+      const req = indexedDB.open(_PHOTO_DB, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(_PHOTO_STORE)) db.createObjectStore(_PHOTO_STORE);
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    } catch (e) { reject(e); }
+  });
+  return _photoDbPromise;
+}
+async function idbSetPhotos(pid, photos) {
+  try {
+    const db = await _openPhotoDb();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(_PHOTO_STORE, 'readwrite');
+      tx.objectStore(_PHOTO_STORE).put(photos, pid);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch (e) { console.warn('写真のIndexedDB保存に失敗:', e && e.message); }
+}
+async function idbGetPhotos(pid) {
+  try {
+    const db = await _openPhotoDb();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction(_PHOTO_STORE, 'readonly');
+      const r = tx.objectStore(_PHOTO_STORE).get(pid);
+      r.onsuccess = () => resolve(r.result || null);
+      r.onerror = () => reject(r.error);
+    });
+  } catch (e) { console.warn('写真のIndexedDB読込に失敗:', e && e.message); return null; }
+}
+async function idbDeletePhotos(pid) {
+  try {
+    const db = await _openPhotoDb();
+    await new Promise((resolve) => {
+      const tx = db.transaction(_PHOTO_STORE, 'readwrite');
+      tx.objectStore(_PHOTO_STORE).delete(pid);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+    });
+  } catch (e) {}
+}
+
+// contractData から写真フィールドを抽出（IndexedDB用）と、写真を除いた本体を返す
+const _PHOTO_SCALAR_KEYS = ['insuranceCardPhoto','careInsurancePhoto','burdenRatioPhoto','selfSupportPhoto','limitAmountPhoto','prescriptionPhoto','namestyleKanji'];
+function _isDataUrl(v) { return typeof v === 'string' && v.startsWith('data:'); }
+function extractContractPhotos(cd) {
+  if (!cd) return { photos: {}, stripped: cd };
+  const photos = {};
+  const stripped = { ...cd };
+  _PHOTO_SCALAR_KEYS.forEach(k => {
+    if (_isDataUrl(cd[k])) { photos[k] = cd[k]; stripped[k] = null; }
+  });
+  if (Array.isArray(cd.prescriptionPhotos)) {
+    photos.prescriptionPhotos = cd.prescriptionPhotos.slice();
+    stripped.prescriptionPhotos = [];
+  }
+  if (Array.isArray(cd.handbooks)) {
+    photos.handbookPhotos = cd.handbooks.map(h => (h && _isDataUrl(h.photo)) ? h.photo : null);
+    stripped.handbooks = cd.handbooks.map(h => (h && _isDataUrl(h.photo)) ? { ...h, photo: null } : h);
+  }
+  if (Array.isArray(cd.otherPublicFunds)) {
+    photos.otherPublicFundPhotos = cd.otherPublicFunds.map(f => (f && _isDataUrl(f.photo)) ? f.photo : null);
+    stripped.otherPublicFunds = cd.otherPublicFunds.map(f => (f && _isDataUrl(f.photo)) ? { ...f, photo: null } : f);
+  }
+  return { photos, stripped };
+}
+// 写真フィールドが空のときだけIndexedDBの写真で補完（Drive等の既存写真を優先しつつ欠損を復旧）
+function mergeContractPhotos(cd, photos) {
+  if (!cd || !photos) return cd;
+  const out = { ...cd };
+  _PHOTO_SCALAR_KEYS.forEach(k => {
+    if (!_isDataUrl(out[k]) && _isDataUrl(photos[k])) out[k] = photos[k];
+  });
+  if ((!Array.isArray(out.prescriptionPhotos) || out.prescriptionPhotos.length === 0) && Array.isArray(photos.prescriptionPhotos) && photos.prescriptionPhotos.length) {
+    out.prescriptionPhotos = photos.prescriptionPhotos.slice();
+    if (!_isDataUrl(out.prescriptionPhoto) && out.prescriptionPhotos[0]) out.prescriptionPhoto = out.prescriptionPhotos[0];
+  }
+  if (Array.isArray(out.handbooks) && Array.isArray(photos.handbookPhotos)) {
+    out.handbooks = out.handbooks.map((h, i) => (h && !_isDataUrl(h.photo) && _isDataUrl(photos.handbookPhotos[i])) ? { ...h, photo: photos.handbookPhotos[i] } : h);
+  }
+  if (Array.isArray(out.otherPublicFunds) && Array.isArray(photos.otherPublicFundPhotos)) {
+    out.otherPublicFunds = out.otherPublicFunds.map((f, i) => (f && !_isDataUrl(f.photo) && _isDataUrl(photos.otherPublicFundPhotos[i])) ? { ...f, photo: photos.otherPublicFundPhotos[i] } : f);
+  }
+  return out;
+}
+// Driveから取得したデータにIndexedDBの写真を補完する（保存失敗・容量対策の復旧用）
+async function hydratePhotosFromIdb(pid, data) {
+  if (!data || !data.contractData) return data;
+  try {
+    const photos = await idbGetPhotos(pid);
+    if (photos) return { ...data, contractData: mergeContractPhotos(data.contractData, photos) };
+  } catch (e) {}
+  return data;
+}
+
+// セッション中の同期読み出し用キャッシュ（写真込みの完全データを保持）
+const _fullDataCache = {};
 function loadPatientData(pid) {
+  if (_fullDataCache[pid]) return _fullDataCache[pid];
   try { return JSON.parse(localStorage.getItem('hinata_data_' + pid) || 'null'); } catch (e10) { return null; }
 }
 function compressPhotosInData(data) {
@@ -3157,38 +3270,35 @@ function compressPhotosInData(data) {
 }
 function savePatientData(pid, data) {
   const key = 'hinata_data_' + pid;
+  // セッション中の同期読み出し用に写真込みの完全データを保持
+  _fullDataCache[pid] = data;
+  // 写真はIndexedDBへ退避し、localStorageには写真を除いたデータのみ保存（容量超過で写真が消えるのを防ぐ）
+  let toStore = data;
   try {
-    localStorage.setItem(key, JSON.stringify(data));
+    if (window.indexedDB && data && data.contractData) {
+      const { photos, stripped } = extractContractPhotos(data.contractData);
+      idbSetPhotos(pid, photos); // 非同期（失敗しても致命的でない）
+      toStore = { ...data, contractData: stripped };
+    }
+  } catch (e) { toStore = data; }
+  try {
+    localStorage.setItem(key, JSON.stringify(toStore));
   } catch (e11) {
-    // 容量超過の場合: まず手書きキャンバスを除去
+    // 写真はIndexedDBに退避済み。それでも容量超過する場合は手書きキャンバスを除去して再試行
     console.warn('localStorage容量超過、手書きデータ除去して再試行...');
     try {
-      const d1 = JSON.parse(JSON.stringify(data));
-      if (d1.contractData && d1.contractData.namestyleKanji && d1.contractData.namestyleKanji.startsWith('data:')) {
+      const d1 = JSON.parse(JSON.stringify(toStore));
+      if (d1.contractData && typeof d1.contractData.namestyleKanji === 'string' && d1.contractData.namestyleKanji.startsWith('data:')) {
         d1.contractData.namestyleKanji = '(保存済み・再表示には再入力が必要)';
       }
       localStorage.setItem(key, JSON.stringify(d1));
-      console.log('手書きデータ除去後の保存成功');
-      return;
-    } catch(e) {}
-    // それでも失敗: 写真を除いて保存
-    console.warn('写真なしで保存');
-    try {
-      const noPhoto = JSON.parse(JSON.stringify(data));
-      if (noPhoto.contractData) {
-        ['insuranceCardPhoto','careInsurancePhoto','burdenRatioPhoto','selfSupportPhoto','limitAmountPhoto','prescriptionPhoto'].forEach(k => { noPhoto.contractData[k] = null; });
-        noPhoto.contractData.prescriptionPhotos = [];
-        if (noPhoto.contractData.handbooks) noPhoto.contractData.handbooks.forEach(h => { h.photo = null; });
-        if (noPhoto.contractData.namestyleKanji && noPhoto.contractData.namestyleKanji.startsWith('data:')) {
-          noPhoto.contractData.namestyleKanji = '(保存済み・再表示には再入力が必要)';
-        }
-      }
-      localStorage.setItem(key, JSON.stringify(noPhoto));
-    } catch(e12) { console.error('保存完全失敗:', e12.message); }
+    } catch(e12) { console.error('保存失敗:', e12 && e12.message); }
   }
 }
 function deletePatientData(pid) {
   try { localStorage.removeItem('hinata_data_' + pid); } catch (e12) {}
+  delete _fullDataCache[pid];
+  idbDeletePhotos(pid);
 }
 
 // ===== Google Drive データ同期 =====
@@ -3298,7 +3408,9 @@ function PatientSelectScreen({ onSelect, onNew, user, onLogout, patients: patien
           recordHasExtracted: detail.recordHasExtracted || (detail.recordData && detail.recordData.recordHasExtracted) || false,
           staffTaskData: detail.staffTaskData || detail.taskData || null,
         };
-        savePatientData(dp.id, normalizedDetail);
+        // IndexedDBの写真で補完してから保存（Drive側に写真が無くてもローカルの写真を失わない）
+        const hydratedDetail = await hydratePhotosFromIdb(dp.id, normalizedDetail);
+        savePatientData(dp.id, hydratedDetail);
         // 利用者名を解決（優先順位: patientMeta.name > contractData.basicInfo.userName）
         const name =
           (detail.patientMeta && detail.patientMeta.name && detail.patientMeta.name !== '新規利用者')
@@ -3373,7 +3485,7 @@ function PatientSelectScreen({ onSelect, onNew, user, onLogout, patients: patien
           if (!detail || !detail.contractData) continue;
           const pat = { id: dp.id, name, createdAt: dp.modifiedTime, updatedAt: dp.modifiedTime };
           newPats.push(pat);
-          savePatientData(dp.id, detail);
+          savePatientData(dp.id, await hydratePhotosFromIdb(dp.id, detail));
         }
       }
 
@@ -3408,9 +3520,12 @@ function PatientSelectScreen({ onSelect, onNew, user, onLogout, patients: patien
         const rf = driveData.recordFields || (driveData.recordData ? driveData.recordData.recordFields : null) || null;
         const rt = driveData.recordTranscriptText || (driveData.recordData ? driveData.recordData.recordTranscriptText : '') || '';
         const rh = driveData.recordHasExtracted || (driveData.recordData ? driveData.recordData.recordHasExtracted : false) || false;
-        const normalized = { contractData: cd, emergencyData: ed, staffTaskData: td, recordFields: rf, recordTranscriptText: rt, recordHasExtracted: rh, patientMeta: driveData.patientMeta, transferredAt: driveData.transferredAt };
+        // Drive側に写真が無い/保存失敗していた場合に備え、IndexedDBの写真で補完
+        let mergedCd = cd;
+        if (cd) { const idbPhotos = await idbGetPhotos(p.id); if (idbPhotos) mergedCd = mergeContractPhotos(cd, idbPhotos); }
+        const normalized = { contractData: mergedCd, emergencyData: ed, staffTaskData: td, recordFields: rf, recordTranscriptText: rt, recordHasExtracted: rh, patientMeta: driveData.patientMeta, transferredAt: driveData.transferredAt };
         savePatientData(p.id, normalized);
-        const name = (cd && cd.basicInfo && cd.basicInfo.userName) || (driveData.patientMeta && driveData.patientMeta.name) || p.name;
+        const name = (mergedCd && mergedCd.basicInfo && mergedCd.basicInfo.userName) || (driveData.patientMeta && driveData.patientMeta.name) || p.name;
         const pats = loadPatients();
         savePatients(pats.map(pt => pt.id === p.id ? { ...pt, name } : pt));
         setLoadingPatient(null);
