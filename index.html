@@ -1030,10 +1030,31 @@ const initContract = () => ({
 
 const FAMILY_RELATIONS = ["夫","妻","父","母","兄弟","姉妹","長男","次男","三男","長女","次女","三女","祖父","祖母","その他"];
 
+// 家族メンバーの安定ID。緊急連絡先↔記録書Ⅰの照合キーとして使う（氏名は入力途中で変わるため使わない）
+function genFamilyId() {
+  return 'fam_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+}
+// id を持たない家族メンバーに id を補完（既存データの移行用）
+function withFamilyId(m) {
+  return (m && m.id) ? m : { ...(m || {}), id: genFamilyId() };
+}
+function backfillFamilyIds(arr) {
+  return Array.isArray(arr) ? arr.map(withFamilyId) : arr;
+}
+// emergencyData / recordFields を読み込んだ際に family / familyMembers の id を補完する
+function withEmergencyFamilyIds(ed) {
+  if (!ed || !Array.isArray(ed.family)) return ed;
+  return { ...ed, family: backfillFamilyIds(ed.family) };
+}
+function withRecordFamilyIds(rf) {
+  if (!rf || !Array.isArray(rf.familyMembers)) return rf;
+  return { ...rf, familyMembers: backfillFamilyIds(rf.familyMembers) };
+}
+
 const initEmergency = () => ({
   familyMode: "有",
   otherContactMode: "有",
-  family: [{ name: "", relation: "", relationOther: "", phone: "", mobilePhone: "", note: "", ibowPhone: false, ibowMobile: false, isKeyPerson: false }],
+  family: [{ id: genFamilyId(), name: "", relation: "", relationOther: "", phone: "", mobilePhone: "", note: "", ibowPhone: false, ibowMobile: false, isKeyPerson: false }],
   otherContacts: [{ name: "", relation: "", relationOther: "", phone: "", mobilePhone: "", note: "", ibowPhone: false, ibowMobile: false }],
   doctor: { hospital: "", doctorName: "" },
   supporters: [{ role: "", roleOther: "", name: "", phone: "", note: "" }],
@@ -1997,7 +2018,7 @@ function EmergencyTab({ data, setData, fs, contractData, toast }) {
   const hasFS = !!fs.extractedAt;
 
   const updFamily = (i, u) => setData(p => ({ ...p, family: p.family.map((f, j) => j === i ? { ...f, ...u } : f) }));
-  const addFamily = () => setData(p => ({ ...p, family: [...p.family, { name: "", relation: "", relationOther: "", phone: "", mobilePhone: "", note: "" }] }));
+  const addFamily = () => setData(p => ({ ...p, family: [...p.family, { id: genFamilyId(), name: "", relation: "", relationOther: "", phone: "", mobilePhone: "", note: "" }] }));
   const rmFamily = (i) => setData(p => ({ ...p, family: p.family.filter((_, j) => j !== i) }));
 
   const updOther = (i, u) => setData(p => ({ ...p, otherContacts: p.otherContacts.map((f, j) => j === i ? { ...f, ...u } : f) }));
@@ -2048,7 +2069,7 @@ function EmergencyTab({ data, setData, fs, contractData, toast }) {
       , data.familyMode === "有" && (
         React.createElement(React.Fragment, null
           , data.family.map((f, i) => (
-            React.createElement(ContactCard, { key: i, person: f, index: i, label: "家族", color: "text-amber-900", ibowTotal: ibowTotal, ibowMax: IBOW_MAX,
+            React.createElement(ContactCard, { key: f.id || i, person: f, index: i, label: "家族", color: "text-amber-900", ibowTotal: ibowTotal, ibowMax: IBOW_MAX,
               fsBadge: i === 0 && hasFS && !!fs.familyContact,
               onUpdate: u => updFamily(i, u), onRemove: () => rmFamily(i), showRemove: data.family.length > 1,
               showMoveUp: i > 0, showMoveDown: i < data.family.length - 1,
@@ -2261,7 +2282,7 @@ function FamilyTable({ members, onChange, onFamilyReorder, ibowTotal, ibowMax })
   const ibowCount = ibowTotal !== undefined ? ibowTotal : members.reduce((n, m) => n + (m.ibowPhone ? 1 : 0) + (m.ibowMobile ? 1 : 0), 0);
   const upd = (i, f, v) => onChange(members.map((m, j) => j === i ? { ...m, [f]: v } : m));
   const updMulti = (i, obj) => onChange(members.map((m, j) => j === i ? { ...m, ...obj } : m));
-  const add = () => onChange([...members, { name: '', relation: '', relationOther: '', phone: '', mobilePhone: '', note: '', ibowPhone: false, ibowMobile: false, isKeyPerson: false }]);
+  const add = () => onChange([...members, { id: genFamilyId(), name: '', relation: '', relationOther: '', phone: '', mobilePhone: '', note: '', ibowPhone: false, ibowMobile: false, isKeyPerson: false }]);
   const rm = (i) => onChange(members.filter((_, j) => j !== i));
   const moveUp = (i) => { const arr = [...members]; [arr[i-1], arr[i]] = [arr[i], arr[i-1]]; onChange(arr); if (onFamilyReorder) onFamilyReorder(arr); };
   const moveDown = (i) => { const arr = [...members]; [arr[i], arr[i+1]] = [arr[i+1], arr[i]]; onChange(arr); if (onFamilyReorder) onFamilyReorder(arr); };
@@ -2270,7 +2291,7 @@ function FamilyTable({ members, onChange, onFamilyReorder, ibowTotal, ibowMax })
       , React.createElement('label', { className: "text-sm font-medium text-stone-800" }, "家族構成")
       , members.length === 0 && React.createElement('p', { className: "text-sm text-stone-700" }, "家族情報がありません。")
       , members.map((m, i) => (
-        React.createElement(Card, { key: i }
+        React.createElement(Card, { key: m.id || i }
           , React.createElement('div', { className: "flex justify-between items-center mb-3" }
             , React.createElement('div', { className: "flex items-center gap-2" }
               , React.createElement('span', { className: "text-xs font-bold text-amber-900" }, "家族 ", i + 1)
@@ -2413,44 +2434,47 @@ function RecordFormPage({ toast, fs, fsVersion, sharedPrescriptionPhoto, autoOcr
     }
   }, [autoOcrPending, sharedPrescriptionPhoto]);
 
-  // 無限ループ防止フラグ（緊急連絡先→記録書Ⅰ同期中はtrue）
-  const syncingFromEmergencyRef = useRef(false);
-
-  // 緊急連絡先→記録書Ⅰ家族構成をリアルタイム同期
+  // 緊急連絡先→記録書Ⅰ家族構成を同期。
+  // 入力（特に日本語IME変換）中に同期が走ると、制御コンポーネントの value が
+  // 再設定されて変換が中断され「入力できなくなる」ため、デバウンスして
+  // 入力が止まってから一度だけ同期する。
+  const emergencyToRecordTimerRef = useRef(null);
   useEffect(() => {
     if (!emergencyData) return;
     const family = emergencyData.family || [];
     if (!family.length) return;
-    const fromEmergency = family
-      .filter(f => f.name)
-      .map(f => ({
-        name: f.name || '',
-        relation: f.relation || '',
-        relationOther: f.relationOther || '',
-        phone: f.phone || '',
-        mobilePhone: f.mobilePhone || '',
-        note: f.note || '',
-        isKeyPerson: !!f.isKeyPerson,
-        ibowPhone: !!f.ibowPhone,
-        ibowMobile: !!f.ibowMobile,
-      }));
-    if (!fromEmergency.length) return;
-    // 無限ループ防止：記録書Ⅰからの更新中フラグを立てる
-    syncingFromEmergencyRef.current = true;
-    setFields(prev => {
-      const existing = prev.familyMembers || [];
-      const emergencyNames = new Set(fromEmergency.map(m => m.name));
-      const notInEmergency = existing.filter(m => !emergencyNames.has(m.name));
-      const merged = fromEmergency.map(em => {
-        const ex = existing.find(m => m.name === em.name);
-        return ex
-          ? { ...ex, ...em }
-          : em;
+    if (emergencyToRecordTimerRef.current) clearTimeout(emergencyToRecordTimerRef.current);
+    emergencyToRecordTimerRef.current = setTimeout(() => {
+      const fromEmergency = family
+        .filter(f => f.name)
+        .map(f => ({
+          id: f.id || genFamilyId(),
+          name: f.name || '',
+          relation: f.relation || '',
+          relationOther: f.relationOther || '',
+          phone: f.phone || '',
+          mobilePhone: f.mobilePhone || '',
+          note: f.note || '',
+          isKeyPerson: !!f.isKeyPerson,
+          ibowPhone: !!f.ibowPhone,
+          ibowMobile: !!f.ibowMobile,
+        }));
+      if (!fromEmergency.length) return;
+      setFields(prev => {
+        const existing = prev.familyMembers || [];
+        const usedIdx = new Set();
+        // id優先で照合。id一致が無ければ氏名でフォールバック（レガシー/FS由来データの統合）し、id を緊急連絡先側に統一する
+        const merged = fromEmergency.map(em => {
+          let idx = existing.findIndex((m, i) => !usedIdx.has(i) && m.id && m.id === em.id);
+          if (idx === -1) idx = existing.findIndex((m, i) => !usedIdx.has(i) && m.name && m.name === em.name);
+          if (idx >= 0) { usedIdx.add(idx); return { ...existing[idx], ...em }; }
+          return em;
+        });
+        const notInEmergency = existing.filter((m, i) => !usedIdx.has(i));
+        return { ...prev, familyMembers: [...merged, ...notInEmergency] };
       });
-      return { ...prev, familyMembers: [...merged, ...notInEmergency] };
-    });
-    // フラグをリセット（setFieldsの非同期処理後）
-    setTimeout(() => { syncingFromEmergencyRef.current = false; }, 100);
+    }, 600);
+    return () => { if (emergencyToRecordTimerRef.current) clearTimeout(emergencyToRecordTimerRef.current); };
   }, [emergencyData]);
 
   useEffect(() => {
@@ -2501,7 +2525,7 @@ function RecordFormPage({ toast, fs, fsVersion, sharedPrescriptionPhoto, autoOcr
       familyMembers: (() => {
         if (!fs.familyMembers || !fs.familyMembers.length) return prev.familyMembers;
         const existingNames = new Set((prev.familyMembers || []).map(m => m.name));
-        const newMembers = fs.familyMembers.filter(m => m.name && !existingNames.has(m.name));
+        const newMembers = fs.familyMembers.filter(m => m.name && !existingNames.has(m.name)).map(withFamilyId);
         return [...(prev.familyMembers || []), ...newMembers];
       })(),
       // 関連機関：新しい機関を追記
@@ -2573,7 +2597,7 @@ function RecordFormPage({ toast, fs, fsVersion, sharedPrescriptionPhoto, autoOcr
         familyMembers: (() => {
           if (!r.familyMembers || !r.familyMembers.length) return prev.familyMembers;
           const existingNames = new Set((prev.familyMembers || []).map(m => m.name));
-          const newMembers = r.familyMembers.filter(m => m.name && !existingNames.has(m.name));
+          const newMembers = r.familyMembers.filter(m => m.name && !existingNames.has(m.name)).map(withFamilyId);
           return [...(prev.familyMembers || []), ...newMembers];
         })(),
         // 関連機関：追記
@@ -2878,12 +2902,12 @@ function ContractPage({ fs, toast, onPrescriptionPhoto, patientId, initialContra
   const [activeTab, setActiveTab] = useState("contract");
   const tabScrollPos = useRef({ contract: 0, emergency: 0, staff: 0 }); // 各タブのスクロール位置
   const [contractData, setContractData] = useState(() => initialContractData || initContract());
-  const [emergencyData, setEmergencyData] = useState(() => initialEmergencyData || initEmergency());
+  const [emergencyData, setEmergencyData] = useState(() => initialEmergencyData ? withEmergencyFamilyIds(initialEmergencyData) : initEmergency());
 
   // 記録書Ⅰからの外部更新を受け取ってemergencyDataを更新
   useEffect(() => {
     if (!externalEmergencyUpdate) return;
-    setEmergencyData(externalEmergencyUpdate);
+    setEmergencyData(withEmergencyFamilyIds(externalEmergencyUpdate));
   }, [externalEmergencyUpdate]);
 
   // 医療機関1 → 緊急連絡先の主治医に自動反映
@@ -2937,7 +2961,7 @@ function ContractPage({ fs, toast, onPrescriptionPhoto, patientId, initialContra
     if (fs.familyContact) setEmergencyData(p => {
       const existingNames = new Set(p.family.map(f => f.name).filter(Boolean));
       if (existingNames.has(fs.familyContact)) return p;
-      const newEntry = { name: fs.familyContact, relation: "", relationOther: "", phone: fs.familyPhone || "", mobilePhone: fs.familyMobilePhone || "", note: "" };
+      const newEntry = { id: genFamilyId(), name: fs.familyContact, relation: "", relationOther: "", phone: fs.familyPhone || "", mobilePhone: fs.familyMobilePhone || "", note: "" };
       return { ...p, familyMode: "有", family: [newEntry, ...p.family] };
     });
     // 緊急：主治医（既存がなければ設定）
@@ -3825,7 +3849,7 @@ function AppInner({ patient, onBack }) {
   // 初期値としてlocalStorageの値をセット（ContractPageマウント前のフォールバック）
   const _savedInit = loadPatientData(patientId) || {};
   const latestContractRef = useRef(_savedInit.contractData || null);
-  const latestEmergencyRef = useRef(_savedInit.emergencyData || null);
+  const latestEmergencyRef = useRef(_savedInit.emergencyData ? withEmergencyFamilyIds(_savedInit.emergencyData) : null);
   const latestTaskRef = useRef(_savedInit.staffTaskData || _savedInit.taskData || null);
   // まずlocalStorageから読み込み、その後Driveから最新を取得
   const saved = loadPatientData(patientId) || {};
@@ -3840,7 +3864,7 @@ function AppInner({ patient, onBack }) {
     setSharedPrescriptionPhoto(photo);
     if (photo) setAutoOcrPending(true);
   }, []);
-  const [recordFields, setRecordFields] = useState(() => saved.recordFields || emptyRecord());
+  const [recordFields, setRecordFields] = useState(() => saved.recordFields ? withRecordFamilyIds(saved.recordFields) : emptyRecord());
   const [recordTranscriptText, setRecordTranscriptText] = useState(() => saved.recordTranscriptText || "");
   const [recordUploadedFiles, setRecordUploadedFiles] = useState([]);
   const [recordHasExtracted, setRecordHasExtracted] = useState(() => saved.recordHasExtracted || false);
@@ -3867,45 +3891,57 @@ function AppInner({ patient, onBack }) {
     return () => clearTimeout(_recSaveRef.current);
   }, [recordFields, recordTranscriptText, recordHasExtracted]);
 
-  // 記録書Ⅰ↔緊急連絡先 双方向リアルタイム同期
-  const prevFamilyRef = useRef(null);
+  // 記録書Ⅰ↔緊急連絡先 双方向同期（入力中の連打・エコー上書きを防ぐためデバウンス）
+  const recordToEmergencyTimerRef = useRef(null);
 
   // 記録書Ⅰの家族構成変更→緊急連絡先に反映
   const familySig = JSON.stringify((recordFields.familyMembers || []).map(m => m.name + '|' + (m.phone || '') + '|' + (m.isKeyPerson || '')));
   useEffect(() => {
     const members = recordFields.familyMembers || [];
     if (!members.length) return;
-    const membersSig = JSON.stringify(members.map(m => ({
-      n: m.name, rel: m.relation, c: m.phone, mc: m.mobilePhone,
-      kp: m.isKeyPerson, ip: m.ibowPhone, im: m.ibowMobile, note: m.note
-    })));
-    if (prevFamilyRef.current === membersSig) return;
-    prevFamilyRef.current = membersSig;
-    if (!latestEmergencyRef.current) return;
-    const emergency = latestEmergencyRef.current;
-    // 記録書Ⅰの家族を緊急連絡先形式に変換
-    const newFamily = members.filter(m => m.name).map(m => {
-      const existing = (emergency.family || []).find(f => f.name === m.name);
-      return {
-        name: m.name || '',
-        relation: m.relation || (existing ? existing.relation : ''),
-        relationOther: m.relationOther || (existing ? existing.relationOther : ''),
-        phone: m.phone || '',
-        mobilePhone: m.mobilePhone || '',
-        note: m.note || (existing ? existing.note : ''),
-        ibowPhone: !!m.ibowPhone,
-        ibowMobile: !!m.ibowMobile,
-        isKeyPerson: !!m.isKeyPerson,
-      };
-    });
-    // 緊急連絡先にあって記録書Ⅰにない家族もそのまま保持
-    const notInRecord = (emergency.family || []).filter(f => f.name && !members.find(m => m.name === f.name));
-    const combined = [...newFamily, ...notInRecord];
-    if (JSON.stringify(combined) !== JSON.stringify(emergency.family || [])) {
+    if (recordToEmergencyTimerRef.current) clearTimeout(recordToEmergencyTimerRef.current);
+    recordToEmergencyTimerRef.current = setTimeout(() => {
+      if (!latestEmergencyRef.current) return;
+      const emergency = latestEmergencyRef.current;
+      const emFamily = emergency.family || [];
+      const usedIdx = new Set();
+      // 記録書Ⅰの家族を緊急連絡先形式に変換（id優先で照合、無ければ氏名でフォールバック）
+      const newFamily = members.filter(m => m.name).map(m => {
+        let idx = m.id ? emFamily.findIndex((f, i) => !usedIdx.has(i) && f.id && f.id === m.id) : -1;
+        if (idx === -1) idx = emFamily.findIndex((f, i) => !usedIdx.has(i) && f.name && f.name === m.name);
+        const existing = idx >= 0 ? emFamily[idx] : null;
+        if (idx >= 0) usedIdx.add(idx);
+        return {
+          id: m.id || (existing && existing.id) || genFamilyId(),
+          name: m.name || '',
+          relation: m.relation || (existing ? existing.relation : ''),
+          relationOther: m.relationOther || (existing ? existing.relationOther : ''),
+          phone: m.phone || '',
+          mobilePhone: m.mobilePhone || '',
+          note: m.note || (existing ? existing.note : ''),
+          ibowPhone: !!m.ibowPhone,
+          ibowMobile: !!m.ibowMobile,
+          isKeyPerson: !!m.isKeyPerson,
+        };
+      });
+      // 緊急連絡先にあって記録書Ⅰにない家族もそのまま保持
+      const notInRecord = emFamily.filter((f, i) => !usedIdx.has(i) && f.name);
+      const combined = [...newFamily, ...notInRecord];
+      // id を含めて内容が同じならスキップ。
+      // 緊急連絡先側の入力が記録書Ⅰ経由でそのまま戻ってきた「エコー」を弾き、
+      // 入力中の上書きやカードの並び替え（再マウント）を防ぐ。
+      const normFam = (arr) => JSON.stringify(
+        (arr || [])
+          .filter(f => f && f.name)
+          .map(f => [f.id || '', f.name || '', f.relation || '', f.relationOther || '', f.phone || '', f.mobilePhone || '', f.note || '', !!f.isKeyPerson, !!f.ibowPhone, !!f.ibowMobile])
+          .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
+      );
+      if (normFam(combined) === normFam(emFamily)) return;
       latestEmergencyRef.current = { ...emergency, family: combined };
       setExternalEmergencyUpdate({ ...emergency, family: combined });
       handleContractDataChange({ contractData: latestContractRef.current, emergencyData: { ...emergency, family: combined }, staffTaskData: latestTaskRef.current });
-    }
+    }, 600);
+    return () => { if (recordToEmergencyTimerRef.current) clearTimeout(recordToEmergencyTimerRef.current); };
   }, [familySig]);
 
   // ContractPage保存コールバック
