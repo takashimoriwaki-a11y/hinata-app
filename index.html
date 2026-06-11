@@ -2377,9 +2377,9 @@ function FamilyTable({ members, onChange, onFamilyReorder, ibowTotal, ibowMax })
             )
           )
           , React.createElement('div', { className: "space-y-2" }
-            , React.createElement('div', { className: "flex items-end gap-2" }
-              , React.createElement('div', { className: "flex-1" }, React.createElement(TInput, { label: "氏名", value: m.name || '', onChange: v => upd(i, 'name', v), placeholder: "山田 花子" }))
-              , React.createElement(CopyBtn, { value: m.name || '', label: "氏名コピー", className: "mb-0.5" })
+            , React.createElement('div', { className: "space-y-1" }
+              , React.createElement(TInput, { label: "氏名", value: m.name || '', onChange: v => upd(i, 'name', v), placeholder: "山田 花子" })
+              , React.createElement(CopyBtn, { value: m.name || '', label: "氏名コピー", className: "w-full" })
             )
             , React.createElement(RelationSelect, { value: m.relation || '', onChange: v => updMulti(i, { relation: v }), relationOther: m.relationOther || '', onOtherChange: v => upd(i, 'relationOther', v) })
             , React.createElement(PhonePartsInput, { label: "電話番号（固定）", value: m.phone || '', onChange: v => upd(i, 'phone', v),
