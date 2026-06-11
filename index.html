@@ -2378,7 +2378,7 @@ function FamilyTable({ members, onChange, onFamilyReorder, ibowTotal, ibowMax })
           )
           , React.createElement('div', { className: "space-y-2" }
             , React.createElement('div', { className: "flex items-end gap-2" }
-              , React.createElement('div', { className: "flex-1" }, React.createElement(TInput, { label: "氏名", value: m.name || '', onChange: v => upd(i, 'name', v), placeholder: "山田 花子", voice: true }))
+              , React.createElement('div', { className: "flex-1" }, React.createElement(TInput, { label: "氏名", value: m.name || '', onChange: v => upd(i, 'name', v), placeholder: "山田 花子" }))
               , React.createElement(CopyBtn, { value: m.name || '', label: "氏名コピー", className: "mb-0.5" })
             )
             , React.createElement(RelationSelect, { value: m.relation || '', onChange: v => updMulti(i, { relation: v }), relationOther: m.relationOther || '', onOtherChange: v => upd(i, 'relationOther', v) })
@@ -2395,7 +2395,7 @@ function FamilyTable({ members, onChange, onFamilyReorder, ibowTotal, ibowMax })
               )
             })
             , ibowCount >= IBOW_MAX && React.createElement('p', { className: "text-sm text-orange-600 font-bold mt-0.5" }, "⚠ ibow登録は2件まで")
-            , React.createElement(TTextarea, { label: "備考", value: m.note || '', onChange: v => upd(i, 'note', v), placeholder: "緊急時の優先順位、連絡可能時間など…", rows: 2, voice: true })
+            , React.createElement(TTextarea, { label: "備考", value: m.note || '', onChange: v => upd(i, 'note', v), placeholder: "緊急時の優先順位、連絡可能時間など…", rows: 2 })
             , React.createElement(CopyBtn, { value: m.note || '', label: "備考コピー", className: "w-full" })
             , React.createElement('label', { className: "flex items-center gap-2 mt-2 cursor-pointer select-none" }
               , React.createElement('input', { type: "checkbox", checked: !!m.isKeyPerson, onChange: e => updMulti(i, { isKeyPerson: e.target.checked }), className: "w-4 h-4 accent-amber-600" })
