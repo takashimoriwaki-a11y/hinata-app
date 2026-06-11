@@ -618,6 +618,77 @@ function TTextarea({ label, value, onChange, placeholder, rows = 2, badge, voice
   );
 }
 
+function CopyBtn({ value, label = "コピー", className = "" }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    if (!value) return;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(value);
+      } else {
+        const el = document.createElement("textarea");
+        el.value = value;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand("copy");
+        document.body.removeChild(el);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch (e) {}
+  };
+  return React.createElement('button', {
+    type: "button",
+    onClick: copy,
+    disabled: !value,
+    className: `shrink-0 px-3 py-2 rounded-xl border text-sm font-bold active:scale-95 disabled:opacity-40 ${copied ? "bg-green-100 border-green-500 text-green-700" : "bg-white border-stone-400 text-stone-700"} ${className}`,
+  }, copied ? "コピー済" : label);
+}
+
+function splitPhoneParts(value) {
+  const raw = (value || '').trim();
+  if (!raw) return ['', '', ''];
+  if (raw.includes('-')) {
+    const parts = raw.split('-').slice(0, 3);
+    return [parts[0] || '', parts[1] || '', parts.slice(2).join('') || ''];
+  }
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length === 10) return [digits.slice(0, 4), digits.slice(4, 6), digits.slice(6)];
+  return [digits.slice(0, 3), digits.slice(3, 7), digits.slice(7)];
+}
+
+function PhonePartsInput({ label, value, onChange, ibowControl }) {
+  const parts = splitPhoneParts(value);
+  const setPart = (idx, partValue) => {
+    const next = [...parts];
+    next[idx] = partValue.replace(/\D/g, '');
+    onChange(next.join('-'));
+  };
+  return (
+    React.createElement('div', { className: "space-y-1" }
+      , React.createElement('label', { className: "text-sm text-stone-700" }, label)
+      , React.createElement('div', { className: "flex items-end gap-2" }
+        , React.createElement('div', { className: "flex-1 grid grid-cols-3 gap-1.5" }
+          , [0, 1, 2].map(i =>
+            React.createElement('div', { key: i, className: "space-y-1" }
+              , React.createElement('input', {
+                type: "text",
+                inputMode: "tel",
+                value: parts[i],
+                onChange: e => setPart(i, e.target.value),
+                placeholder: i === 0 ? "090" : "xxxx",
+                className: "w-full bg-white border border-stone-600 rounded-xl px-2 py-3 text-stone-800 text-base placeholder-slate-500 focus:outline-none focus:border-amber-500",
+              })
+              , React.createElement(CopyBtn, { value: parts[i], label: `コピー${i+1}`, className: "w-full px-1 py-1.5 text-xs rounded-lg" })
+            )
+          )
+        )
+        , ibowControl
+      )
+    )
+  );
+}
+
 // Inline voice button (small)
 function VoiceInline({ onText }) {
   const [rec, setRec] = useState(false);
@@ -1986,25 +2057,27 @@ function ContactCard({ person, index, label, color, badge, onUpdate, onRemove, s
         )
       )
       , React.createElement('div', { className: "space-y-2",}
-        , React.createElement(TInput, { label: "氏名", value: person.name, onChange: v => onUpdate({ name: v }), placeholder: "山田 花子" ,} )
-        , React.createElement(RelationSelect, { value: person.relation, onChange: v => onUpdate({ relation: v }), relationOther: person.relationOther, onOtherChange: v => onUpdate({ relationOther: v }),} )
         , React.createElement('div', { className: "flex items-end gap-2" }
-          , React.createElement('div', { className: "flex-1" }, React.createElement(TInput, { label: "電話番号（固定）", type: "tel", value: person.phone, onChange: v => onUpdate({ phone: v }), placeholder: "0742-xx-xxxx" }))
-          , person.phone && React.createElement('label', { className: "flex flex-col items-center gap-1 pb-1 cursor-pointer shrink-0" }
+          , React.createElement('div', { className: "flex-1" }, React.createElement(TInput, { label: "氏名", value: person.name, onChange: v => onUpdate({ name: v }), placeholder: "山田 花子" ,} ))
+          , React.createElement(CopyBtn, { value: person.name, label: "氏名コピー", className: "mb-0.5" })
+        )
+        , React.createElement(RelationSelect, { value: person.relation, onChange: v => onUpdate({ relation: v }), relationOther: person.relationOther, onOtherChange: v => onUpdate({ relationOther: v }),} )
+        , React.createElement(PhonePartsInput, { label: "電話番号（固定）", value: person.phone, onChange: v => onUpdate({ phone: v }),
+          ibowControl: person.phone && React.createElement('label', { className: "flex flex-col items-center gap-1 pb-1 cursor-pointer shrink-0" }
             , React.createElement('span', { className: "text-sm text-stone-700 font-bold" }, "ibow登録")
             , React.createElement('input', { type: "checkbox", checked: !!person.ibowPhone, disabled: !person.ibowPhone && ibowTotal >= ibowMax, onChange: e => onUpdate({ ibowPhone: e.target.checked }), className: "w-5 h-5 accent-amber-600" })
           )
-        )
-        , React.createElement('div', { className: "flex items-end gap-2" }
-          , React.createElement('div', { className: "flex-1" }, React.createElement(TInput, { label: "電話番号（携帯）", type: "tel", value: person.mobilePhone || "", onChange: v => onUpdate({ mobilePhone: v }), placeholder: "090-xxxx-xxxx" }))
-          , person.mobilePhone && React.createElement('label', { className: "flex flex-col items-center gap-1 pb-1 cursor-pointer shrink-0" }
+        })
+        , React.createElement(PhonePartsInput, { label: "電話番号（携帯）", value: person.mobilePhone || "", onChange: v => onUpdate({ mobilePhone: v }),
+          ibowControl: person.mobilePhone && React.createElement('label', { className: "flex flex-col items-center gap-1 pb-1 cursor-pointer shrink-0" }
             , React.createElement('span', { className: "text-sm text-stone-700 font-bold" }, "ibow登録")
             , React.createElement('input', { type: "checkbox", checked: !!person.ibowMobile, disabled: !person.ibowMobile && ibowTotal >= ibowMax, onChange: e => onUpdate({ ibowMobile: e.target.checked }), className: "w-5 h-5 accent-amber-600" })
           )
-        )
+        })
         , ibowTotal >= ibowMax && React.createElement('p', { className: "text-sm text-orange-600 font-bold mt-0.5" }, "⚠ ibow登録は2件まで")
 
         , React.createElement(TTextarea, { label: "備考", value: person.note, onChange: v => onUpdate({ note: v }), placeholder: "緊急時の優先順位、連絡可能時間など…", rows: 2, voice: true,} )
+        , React.createElement(CopyBtn, { value: person.note, label: "備考コピー", className: "w-full" })
         , React.createElement('label', { className: "flex items-center gap-2 mt-2 cursor-pointer select-none" }
           , React.createElement('input', { type: "checkbox", checked: !!person.isKeyPerson, onChange: e => onUpdate({ isKeyPerson: e.target.checked }), className: "w-4 h-4 accent-amber-600" })
           , React.createElement('span', { className: person.isKeyPerson ? "text-sm font-bold text-amber-900" : "text-sm text-stone-600" }, "キーパーソン（KP）")
@@ -2304,24 +2377,26 @@ function FamilyTable({ members, onChange, onFamilyReorder, ibowTotal, ibowMax })
             )
           )
           , React.createElement('div', { className: "space-y-2" }
-            , React.createElement(TInput, { label: "氏名", value: m.name || '', onChange: v => upd(i, 'name', v), placeholder: "山田 花子", voice: true })
-            , React.createElement(RelationSelect, { value: m.relation || '', onChange: v => updMulti(i, { relation: v }), relationOther: m.relationOther || '', onOtherChange: v => upd(i, 'relationOther', v) })
             , React.createElement('div', { className: "flex items-end gap-2" }
-              , React.createElement('div', { className: "flex-1" }, React.createElement(TInput, { label: "電話番号（固定）", type: "tel", value: m.phone || '', onChange: v => upd(i, 'phone', v), placeholder: "0742-xx-xxxx" }))
-              , m.phone && React.createElement('label', { className: "flex flex-col items-center gap-1 pb-1 cursor-pointer shrink-0" }
+              , React.createElement('div', { className: "flex-1" }, React.createElement(TInput, { label: "氏名", value: m.name || '', onChange: v => upd(i, 'name', v), placeholder: "山田 花子", voice: true }))
+              , React.createElement(CopyBtn, { value: m.name || '', label: "氏名コピー", className: "mb-0.5" })
+            )
+            , React.createElement(RelationSelect, { value: m.relation || '', onChange: v => updMulti(i, { relation: v }), relationOther: m.relationOther || '', onOtherChange: v => upd(i, 'relationOther', v) })
+            , React.createElement(PhonePartsInput, { label: "電話番号（固定）", value: m.phone || '', onChange: v => upd(i, 'phone', v),
+              ibowControl: m.phone && React.createElement('label', { className: "flex flex-col items-center gap-1 pb-1 cursor-pointer shrink-0" }
                 , React.createElement('span', { className: "text-sm text-stone-700 font-bold" }, "ibow登録")
                 , React.createElement('input', { type: "checkbox", checked: !!m.ibowPhone, disabled: !m.ibowPhone && ibowCount >= IBOW_MAX, onChange: e => updMulti(i, { ibowPhone: e.target.checked }), className: "w-5 h-5 accent-amber-600" })
               )
-            )
-            , React.createElement('div', { className: "flex items-end gap-2" }
-              , React.createElement('div', { className: "flex-1" }, React.createElement(TInput, { label: "電話番号（携帯）", type: "tel", value: m.mobilePhone || '', onChange: v => upd(i, 'mobilePhone', v), placeholder: "090-xxxx-xxxx" }))
-              , m.mobilePhone && React.createElement('label', { className: "flex flex-col items-center gap-1 pb-1 cursor-pointer shrink-0" }
+            })
+            , React.createElement(PhonePartsInput, { label: "電話番号（携帯）", value: m.mobilePhone || '', onChange: v => upd(i, 'mobilePhone', v),
+              ibowControl: m.mobilePhone && React.createElement('label', { className: "flex flex-col items-center gap-1 pb-1 cursor-pointer shrink-0" }
                 , React.createElement('span', { className: "text-sm text-stone-700 font-bold" }, "ibow登録")
                 , React.createElement('input', { type: "checkbox", checked: !!m.ibowMobile, disabled: !m.ibowMobile && ibowCount >= IBOW_MAX, onChange: e => updMulti(i, { ibowMobile: e.target.checked }), className: "w-5 h-5 accent-amber-600" })
               )
-            )
+            })
             , ibowCount >= IBOW_MAX && React.createElement('p', { className: "text-sm text-orange-600 font-bold mt-0.5" }, "⚠ ibow登録は2件まで")
             , React.createElement(TTextarea, { label: "備考", value: m.note || '', onChange: v => upd(i, 'note', v), placeholder: "緊急時の優先順位、連絡可能時間など…", rows: 2, voice: true })
+            , React.createElement(CopyBtn, { value: m.note || '', label: "備考コピー", className: "w-full" })
             , React.createElement('label', { className: "flex items-center gap-2 mt-2 cursor-pointer select-none" }
               , React.createElement('input', { type: "checkbox", checked: !!m.isKeyPerson, onChange: e => updMulti(i, { isKeyPerson: e.target.checked }), className: "w-4 h-4 accent-amber-600" })
               , React.createElement('span', { className: m.isKeyPerson ? "text-sm font-bold text-amber-900" : "text-sm text-stone-600" }, "キーパーソン（KP）")
