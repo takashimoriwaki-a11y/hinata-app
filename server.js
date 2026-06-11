@@ -887,6 +887,7 @@ function buildRows(c, e) {
   // ■ 書類
   SEC('■ 書類');
   R('医療保険証', c.insuranceCard, ['有','無','不要']);
+  R('マイナンバーカード確認', c.myNumberCard ? '済' : '未', ['済','未']);
   R('介護保険証', c.careInsurance, ['有','無']);
   R('負担割合証', c.burdenRatio, ['有','無']);
   R('限度額認定証', c.limitAmount, ['有','無']);

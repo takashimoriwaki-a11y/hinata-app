@@ -4145,8 +4145,8 @@ function AppInner({ patient, onBack }) {
   const [isSaving, setIsSaving] = React.useState(false);
   const handleSheetsTransfer = useCallback(async () => {
     const saved = loadPatientData(patientId) || {};
-    const contractData = saved.contractData;
-    const emergencyData = saved.emergencyData;
+    const contractData = latestContractRef.current !== null ? latestContractRef.current : saved.contractData;
+    const emergencyData = latestEmergencyRef.current !== null ? latestEmergencyRef.current : saved.emergencyData;
     const userName = (contractData && contractData.basicInfo && contractData.basicInfo.userName) || patient.name;
     if (!userName || userName === '新規利用者') {
       toast.error('氏名を入力してから転記してください');
