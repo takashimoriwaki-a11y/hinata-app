@@ -1071,6 +1071,7 @@ const initContract = () => ({
   prescriptionNote: "",
   // 訪問看護指示書
   instruction: "未",
+  instructionType: "",
   instructionDest: "",
   instructionVerbalDate: "",
   instructionDocNeed: "",
@@ -1237,6 +1238,7 @@ function ContractTab({ data, setData, fs, onPrescriptionPhoto, toast }) {
       data.prescription === "済" || data.prescription === "処方なし",
       // 訪問看護指示書（全5項目）
       data.instruction === "済",
+      !!data.instructionType,
       !!data.instructionDest,
       !!data.instructionDoctor,
       !!data.instructionDate,
@@ -1699,6 +1701,18 @@ function ContractTab({ data, setData, fs, onPrescriptionPhoto, toast }) {
           )
         )
         , React.createElement(Toggle2, { val: data.instruction, opts: [{ label: "済", value: "済" }, { label: "未", value: "未" }], onChange: v => set("instruction", v), large: true,} )
+        , React.createElement('div', { className: "space-y-2 mt-3" }
+          , React.createElement(CardLabel, null, "指示書種別")
+          , React.createElement('div', { className: "flex flex-col gap-2" }
+            , ["精神科訪問看護指示書", "訪問看護指示書"].map(type =>
+              React.createElement('button', {
+                key: type,
+                onClick: () => set("instructionType", data.instructionType === type ? "" : type),
+                className: `w-full py-3 px-4 rounded-xl text-sm font-bold border text-left transition-all active:scale-95 ${data.instructionType === type ? "bg-sky-600 border-sky-500 text-white" : "bg-white border-stone-400 text-stone-700"}`
+              }, type)
+            )
+          )
+        )
         , React.createElement('div', { className: "mt-3",}
         )
         , React.createElement('div', { className: "space-y-2 mt-2" ,}
@@ -2875,7 +2889,7 @@ function calcContractProgress(d) {
     d.handbooks && d.handbooks.some(h => h.status !== "未"),
     d.aplus === "済" || d.aplus === "生活保護",
     d.prescription === "済" || d.prescription === "処方なし",
-    d.instruction === "済", !!d.instructionDest, !!d.instructionDoctor,
+    d.instruction === "済", !!d.instructionType, !!d.instructionDest, !!d.instructionDoctor,
     !!d.instructionStart,
     d.namestyle !== "",
     d.cautionVisitTime, d.cautionTeam, d.cautionStayTime, d.cautionHoliday,
@@ -2892,7 +2906,7 @@ function calcContractProgress(d) {
     d.handbooks && d.handbooks.every(h => h.status === "未"),
     d.aplus === "未",
     d.prescription === "未",
-    d.instruction === "未", !d.instructionDest, !d.instructionDoctor,
+    d.instruction === "未", !d.instructionType, !d.instructionDest, !d.instructionDoctor,
     !d.instructionStart,
     d.namestyle === "",
     !d.cautionVisitTime, !d.cautionTeam, !d.cautionStayTime, !d.cautionHoliday,
@@ -2924,6 +2938,7 @@ function calcContractTodos(d) {
   if (d.aplus === '未')      todos.push('アプラス用紙');
   if (d.prescription === '未') todos.push('処方内容');
   if (d.instruction === '未')  todos.push('指示書');
+  if (!d.instructionType)      todos.push('指示書種別');
   if (!d.instructionDest)    todos.push('指示書依頼先');
   if (!d.instructionDoctor)  todos.push('指示書主治医');
   if (!d.instructionStart)   todos.push('指示書開始日');

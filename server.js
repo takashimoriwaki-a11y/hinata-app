@@ -938,6 +938,7 @@ function buildRows(c, e) {
   // ■ 訪問看護指示書の依頼
   SEC('■ 訪問看護指示書の依頼');
   R('指示書', c.instruction, ['済','未']);
+  R('指示書種別', c.instructionType, ['精神科訪問看護指示書','訪問看護指示書']);
   R('依頼先（医療機関）', c.instructionDest);
   R('主治医', c.instructionDoctor);
   R('口頭で依頼した日', formatDateBoth(c.instructionVerbalDate));
