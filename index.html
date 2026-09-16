@@ -1915,6 +1915,12 @@ function DriveUploadBtn({ data, toast }) {
       label: `手帳${data.handbooks.length > 1 ? (i + 1) : ""}`,
       photo: hb.photo,
     })),
+    ...(data.otherPublicFunds || []).map((opf, i) => ({
+      label: opf.name
+        ? `公費${(data.otherPublicFunds || []).length > 1 ? (i + 1) : ""}（${opf.name}）`
+        : `公費${(data.otherPublicFunds || []).length > 1 ? (i + 1) : ""}`,
+      photo: opf.photo,
+    })),
   ].filter(p => p.photo);
 
   const handleUpload = async () => {
