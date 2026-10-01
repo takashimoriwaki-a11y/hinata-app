@@ -344,30 +344,44 @@ app.post('/api/ocr-facesheet', verifySignature, limitOCR, async (req, res) => {
     const visionToken = await getAccessTokenForVision(serviceAccount);
 
     // Step1: Google Vision OCRで高精度テキスト抽出（Geminiの補助情報として使用）
+    // PDFはVision images:annotate非対応のためGeminiへ直接渡し、画像のみVision OCRを実行
+    const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/heic', 'image/webp', 'application/pdf'];
     let ocrTexts = [];
     const imageParts = [];
     for (const img of (images || [])) {
-      const b64 = sanitizeBase64(img.base64);
+      // PDFは画像より大きいことが多いため上限を30MBに拡張
+      const b64 = sanitizeBase64(img.base64, 30 * 1024 * 1024);
       if (!b64) continue;
-      const mt = ['image/jpeg', 'image/png', 'image/heic', 'image/webp'].includes(img.mimeType)
-        ? img.mimeType : 'image/jpeg';
+      const rawMt = (img.mimeType || '').toLowerCase();
+      const mt = ALLOWED_MIME.includes(rawMt)
+        ? rawMt
+        : (rawMt === 'application/pdf' ? 'application/pdf' : 'image/jpeg');
       imageParts.push({ inline_data: { mime_type: mt, data: b64 } });
-      // Vision OCRでテキスト抽出
-      try {
-        const ocrText = await visionOCR(visionToken, b64, mt);
-        if (ocrText.trim()) ocrTexts.push(ocrText);
-      } catch(e) { console.warn('Vision OCRエラー（続行）:', e.message); }
+      // Vision OCRは画像のみ（PDFはスキップ）
+      if (mt.startsWith('image/')) {
+        try {
+          const ocrText = await visionOCR(visionToken, b64, mt);
+          if (ocrText.trim()) ocrTexts.push(ocrText);
+        } catch(e) { console.warn('Vision OCRエラー（続行）:', e.message); }
+      }
     }
     const visionOcrResult = ocrTexts.join('\n---\n');
 
-    // Step2: Geminiに画像 + Vision OCRテキストの両方を送信（クロスチェック）
+    // Step2: Geminiに画像/PDF + Vision OCRテキストの両方を送信（クロスチェック）
     const parts = [...imageParts];
     const hasImages = imageParts.length > 0;
+    const hasPdf = imageParts.some(p => p.inline_data && p.inline_data.mime_type === 'application/pdf');
+    if (!hasImages && !(supplementText || '').trim()) {
+      return safeError(res, 400, '読み取れる画像またはPDFがありません（ファイルが大きすぎる・形式非対応の可能性があります）');
+    }
 
     const prompt = `あなたは精神科・在宅医療に精通した訪問看護ステーションの熟練事務スタッフです。
-${hasImages ? 'フェイスシートの画像を読み取り、' : '提供されたテキスト情報から、'}訪問看護記録書Ⅰの各項目に正確に振り分けてください。
+${hasImages ? (hasPdf ? 'フェイスシートのPDF/画像を読み取り、' : 'フェイスシートの画像を読み取り、') : '提供されたテキスト情報から、'}訪問看護記録書Ⅰの各項目に正確に振り分けてください。
 
-${hasImages ? '【情報源】画像（原本）とOCRテキスト（参考）の2つ。食い違う場合は画像優先。' : '【情報源】提供されたテキスト情報のみ。記載された内容を正確に各フィールドに振り分けてください。'}
+${hasImages ? (hasPdf
+  ? '【情報源】PDF/画像（原本）とOCRテキスト（参考・画像のみ）。食い違う場合はPDF/画像優先。PDFの全ページを読み取ること。'
+  : '【情報源】画像（原本）とOCRテキスト（参考）の2つ。食い違う場合は画像優先。')
+  : '【情報源】提供されたテキスト情報のみ。記載された内容を正確に各フィールドに振り分けてください。'}
 【文字精度】氏名の漢字は正確に。ふりがなは記載時のみ。住所・電話番号は正確に。和暦は西暦変換（昭和+1925/平成+1988/令和+2018）。${hasImages ? '手書きは筆跡と文脈で判断。' : ''}
 【チェックボックス】✓/○/●/■→該当、□/空欄→非該当
 【医療略語】Alz.→アルツハイマー型認知症, DLB→レビー小体型認知症, HTN→高血圧症, DM→2型糖尿病, CKD→慢性腎臓病, COPD→慢性閉塞性肺疾患, CHF→慢性心不全, CVA→脳梗塞後遺症, OP→骨粗鬆症, PD→パーキンソン病, RA→関節リウマチ, 統合失調症, うつ病, BPD→双極性障害, ASD→自閉スペクトラム症, ADHD→注意欠如多動症, PTSD→心的外傷後ストレス障害, OCD→強迫性障害, パニック障害, 適応障害, 解離性障害, てんかん, デポ剤→LAI, CM→ケアマネジャー, PSW→精神科ソーシャルワーカー, OT→作業療法士, PT→理学療法士, DS→デイサービス, DC→デイケア, GH→グループホーム, HH→訪問介護
@@ -442,7 +456,7 @@ ${visionOcrResult ? '【事前OCRテキスト（参考・誤読注意）】\n' +
     parts.push({ text: prompt });
 
     try {
-      console.log('Gemini FSスキャン開始: 画像数=' + parts.filter(p => p.inline_data).length + ', APIキー存在=' + !!process.env.GEMINI_API_KEY);
+      console.log('Gemini FSスキャン開始: ファイル数=' + parts.filter(p => p.inline_data).length + ', PDF含む=' + hasPdf + ', APIキー存在=' + !!process.env.GEMINI_API_KEY);
       const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${process.env.GEMINI_API_KEY}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

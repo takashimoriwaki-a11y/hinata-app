@@ -924,11 +924,26 @@ function FSModal({ onClose, onExtracted, toast }) {
     if (!files.length && !text.trim()) { toast.error("写真またはテキストを入力してください"); return; }
     setLoading(true);
     try {
-      const content = [];
-      files.filter(f => f.mimeType && f.mimeType.startsWith("image/")).forEach(f => content.push({ type: "image", source: { type: "base64", media_type: f.mimeType, data: f.data } }));
-      content.push({ type: "text", text: 'あなたは精神科・在宅医療に精通した訪問看護ステーションの熟練事務スタッフ兼医療記録の専門家です。訪問看護フェイスシート・情報提供書・アセスメント票・ケアプランの画像を精密に読み取ります。\n\n【チェックボックス・選択欄の読み取りルール（最重要）】\n- ✓、✔、レ点、○、●、■が付いている項目＝その内容が「該当・選択・実施あり」\n- □（空のチェックボックス）、空欄＝非該当・なし\n- チェックされた複数の項目は全て読み取り、自然な文章にまとめる\n- 例：「□介護保険 ✓自立支援 □医療保険」→「自立支援医療を利用している」\n- 例：「✓定期（週2回）□不定期」→「定期訪問（週2回）」\n- 例：「✓有□無（薬の有無）」→「内服薬あり」\n\n【医療用語・介護用語の正確な変換】\n＜疾患・症状＞\n- Alz.、アルツ → アルツハイマー型認知症\n- VaD、脳血管性認知症 → 脳血管性認知症\n- DLB → レビー小体型認知症\n- HTN、高血圧 → 高血圧症\n- DM、糖尿病 → 2型糖尿病\n- CKD → 慢性腎臓病\n- COPD → 慢性閉塞性肺疾患\n- CHF、心不全 → 慢性心不全\n- CVA、脳梗塞、脳卒中 → 脳梗塞後遺症（または脳出血後遺症）\n- OP → 骨粗鬆症\n- Ca → 癌（部位を含めて記載）\n- Fx → 骨折（部位を含めて）\n- TKA、THA → 人工膝関節置換術後、人工股関節置換術後\n- 統合失調症、精神分裂 → 統合失調症\n- うつ病、うつ状態 → うつ病（または抑うつ状態）\n- BPD → 双極性障害\n\n＜介護・福祉＞\n- 要支1/2 → 要支援1/2\n- 要介1〜5 → 要介護1〜5\n- 自立支援医療（精神）→ 精神通院医療（自立支援医療）\n- 身障手帳 → 身体障害者手帳\n- 精神手帳、精保手帳 → 精神障害者保健福祉手帳\n- 療育手帳 → 療育手帳（知的障害）\n- GH → グループホーム\n- CH → ケアハウス\n- DS、デイ → デイサービス\n- DC → デイケア（精神科デイケアまたは介護デイケア）\n- HH、ヘルパー → 訪問介護\n- 訪看 → 訪問看護\n- 往診 → 往診（定期）\n- CM → ケアマネジャー\n- PSW → 精神科ソーシャルワーカー\n- OT → 作業療法士\n- PT → 理学療法士\n- ST → 言語聴覚士\n- Dr → 医師\n\n＜薬・処方＞\n- 内服、内用薬 → 内服薬\n- 頓服 → 頓服薬（必要時）\n- 点滴、IVH → 点滴投与\n- 麻薬 → 医療用麻薬（オピオイド）\n- インスリン → インスリン自己注射\n\n＜ADL・状態＞\n- ADL自立 → 日常生活動作は自立\n- 一部介助 → 一部介助が必要\n- 全介助 → 全面的な介助が必要\n- 見守り → 見守り・声かけが必要\n- IADL → 手段的日常生活動作\n\n【その他の読み取りルール】\n- 手書き文字・かすれた文字も文脈から推測して正確に読む\n- 画像が複数ある場合は全画像の情報を統合する\n- 住所は〒番号・都道府県から番地・アパート名まで完全に記載\n- 電話番号はハイフン付きで正確に（例：0742-65-0372）\n- 生年月日はYYYY-MM-DD形式（例：1940-12-03）\n- bedrideLevel：障害老人日常生活自立度 → J1/J2/A1/A2/B1/B2/C1/C2\n- dementiaLevel：認知症日常生活自立度 → Ⅰ/Ⅱa/Ⅱb/Ⅲa/Ⅲb/Ⅳ/M\n- 家族構成図がある場合は全員を読み取る（キーパーソンは isKeyPerson: true）\n- 受診状況の表がある場合は全病院・全科を記載\n- 申し送り・特記事項は原文を忠実に転記（重要情報を省略しない）\n- 要約・省略せず記載された情報は全て含める\n\n' + (text ? '【補足情報】\\n' + text + '\\n\\n' : '') + '\n\nJSONのみで返してください（説明文・コードブロック・前置き一切不要）:\n{"userName":"利用者氏名（難しい漢字も正確に）","nameKana":"ふりがな（ひらがな）","gender":"男 or 女","age":"年齢（数字のみ）","birthDate":"YYYY-MM-DD","address":"〒含む完全な住所","phone":"固定電話（ハイフン付き）","mobilePhone":"携帯電話（ハイフン付き）","mainDiagnosis":"主傷病名（正式な医学用語で）","medicalHistory":"既往歴・現病歴（360字以内。チェック済み疾患・術歴・発症年含め詳細に。医療用語を正式名称で）","currentCondition":"現在の病状・治療内容・処方薬（440字以内。チェック済み項目・内服薬・受診状況を含め詳細に）","diseaseAwareness":"病識の有無・程度（280字以内）","familyMembers":[{"name":"氏名","age":"年齢","relationship":"続柄","cohabitation":"同居 or 別居","occupation":"職業","contact":"電話番号","isKeyPerson":false}],"familySpecialNotes":"家族構成の特記事項（280字以内）","patientRequest":"本人の要望・希望（273字以内）","familyRequest":"家族の要望・希望（273字以内）","referralRequest":"依頼機関からの要望（273字以内）","otherServices":"利用中の他サービス（320字以内。チェック済みサービスを全て正式名称で記載）","handoverNotes":"申し送り・特記事項（800字以内。チェック済み項目・注意事項・背景情報を詳細に）","bedrideLevel":"J1/J2/A1/A2/B1/B2/C1/C2 or 空","dementiaLevel":"Ⅰ/Ⅱa/Ⅱb/Ⅲa/Ⅲb/Ⅳ/M or 空","relatedInstitutions":[{"name":"機関名","phone":"電話番号","contact":"担当者名"}],"referralSource":"依頼元機関名","referralPhone":"依頼元電話番号","familyContact":"緊急連絡先氏名","familyPhone":"緊急連絡先固定電話","familyMobilePhone":"緊急連絡先携帯電話","doctorHospital":"主治医の病院名","doctorName":"主治医名","supporters":[{"role":"役割（正式名称）","name":"氏名","phone":"電話番号","note":"所属・備考"}]' });
+      // 画像・PDFをOCR送信対象にする（PDFのみ選択時も反映されるようにする）
+      const ocrFiles = files.filter(f => {
+        const mt = (f.mimeType || '').toLowerCase();
+        const name = (f.name || '').toLowerCase();
+        return mt.startsWith('image/') || mt === 'application/pdf' || name.endsWith('.pdf');
+      });
+      if (!ocrFiles.length && !text.trim()) {
+        toast.error("画像またはPDFを選択してください（Word等は未対応です）");
+        setLoading(false);
+        return;
+      }
       const res = await _apiPost("/api/ocr-facesheet", {
-        images: files.filter(f => f.mimeType && f.mimeType.startsWith("image/")).map(f => ({ base64: f.data, mimeType: f.mimeType })),
+        images: ocrFiles.map(f => {
+          const mt = (f.mimeType || '').toLowerCase();
+          const name = (f.name || '').toLowerCase();
+          const mimeType = (mt === 'application/pdf' || name.endsWith('.pdf'))
+            ? 'application/pdf'
+            : (mt.startsWith('image/') ? f.mimeType : 'image/jpeg');
+          return { base64: f.data, mimeType };
+        }),
         text: text.trim()
       });
     const fsResult = await res.json();
@@ -938,7 +953,7 @@ function FSModal({ onClose, onExtracted, toast }) {
       onExtracted(parsed);
       toast.success("フェイスシートを読み取り、両画面に反映しました ✦");
       onClose();
-    } catch (e4) { toast.error("読み取りに失敗しました。画像を確認してください。"); }
+    } catch (e4) { toast.error("読み取りに失敗しました。画像・PDFを確認してください。"); }
     finally { setLoading(false); }
   };
   return (
@@ -2652,8 +2667,25 @@ function RecordFormPage({ toast, fs, fsVersion, sharedPrescriptionPhoto, autoOcr
     if (!transcriptText.trim() && uploadedFiles.length === 0) { toast.error("テキストまたはファイルを入力してください"); return; }
     setIsExtracting(true);
     try {
+      const ocrFiles = uploadedFiles.filter(f => {
+        const mt = (f.mimeType || '').toLowerCase();
+        const name = (f.name || '').toLowerCase();
+        return mt.startsWith('image/') || mt === 'application/pdf' || name.endsWith('.pdf');
+      });
+      if (!ocrFiles.length && !transcriptText.trim()) {
+        toast.error("画像またはPDFを選択してください（Word等は未対応です）");
+        setIsExtracting(false);
+        return;
+      }
       const res = await _apiPost("/api/ocr-facesheet", {
-          images: uploadedFiles.filter(f => f.mimeType && f.mimeType.startsWith("image/")).map(f => ({ base64: f.data || f.base64, mimeType: f.mimeType })),
+          images: ocrFiles.map(f => {
+            const mt = (f.mimeType || '').toLowerCase();
+            const name = (f.name || '').toLowerCase();
+            const mimeType = (mt === 'application/pdf' || name.endsWith('.pdf'))
+              ? 'application/pdf'
+              : (mt.startsWith('image/') ? f.mimeType : 'image/jpeg');
+            return { base64: f.data || f.base64, mimeType };
+          }),
           text: transcriptText
         });
       const result = await res.json();
