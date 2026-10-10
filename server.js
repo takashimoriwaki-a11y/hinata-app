@@ -401,7 +401,18 @@ ${hasImages ? (hasPdf
 ●medicalHistory: 【既往歴及び現病歴】過去にかかった病気・手術歴・発症時期・経過。現在の病気がいつ発症しどう経過したか。入院歴。（360字以内）
 ●currentCondition: 【病状・治療状態・処方内容】現在の症状・状態、通院中の病院と頻度、受けている治療、服用中の薬の名前と量。（440字以内）
 ●diseaseAwareness: 【病識の有無/程度】本人が自分の病気をどの程度理解・自覚しているか。「病識あり」「一部理解」「病識なし」等。（280字以内）
-●familyMembers: 家族構成（配列）。name/age/relationship(続柄)/cohabitation(同居or別居)/occupation/contact(電話)/isKeyPerson(キーパーソンならtrue)
+●familyMembers: 家族構成（配列）。フェイスシートの家族構成図・一覧に載っている家族は漏れなく全員抽出する。
+  各要素:
+  - name: 氏名
+  - age: 年齢（数字または空）
+  - relationship: 続柄（夫/妻/父/母/長男/長女/兄弟/姉妹/祖父/祖母 等）
+  - cohabitation: 同居 or 別居
+  - occupation: 職業
+  - phone: 固定電話（ハイフン付き）
+  - mobilePhone: 携帯電話（ハイフン付き）
+  - contact: 電話が1つしか分からない場合の予備（phone/mobilePhoneへ振り分け可能な値）
+  - isKeyPerson: キーパーソン・主介護者・緊急時の第一連絡先なら true
+  緊急連絡先として記載された人物も必ずfamilyMembersに含め、isKeyPerson:true にする。
 ●familySpecialNotes: 【家族構成特記事項】家族関係の問題・キーパーソン不在・独居の背景等。（280字以内）
 ●patientRequest: 【本人の要望】利用者本人が訪問看護に求めること・希望・目標。（273字以内）
 ●familyRequest: 【家族の要望】家族が訪問看護に求めること・希望・心配事。（273字以内）
@@ -413,9 +424,9 @@ ${hasImages ? (hasPdf
 ●relatedInstitutions: 関連機関（配列）。かかりつけ病院・薬局・相談支援事業所等。name/phone/contact(担当者名)
 ●referralSource: 依頼元機関名（紹介元の病院・相談支援事業所・ケアマネ事業所等）
 ●referralPhone: 依頼元の電話番号
-●familyContact: 緊急連絡先の氏名（家族等）
-●familyPhone: 緊急連絡先の固定電話
-●familyMobilePhone: 緊急連絡先の携帯電話
+●familyContact: 緊急連絡先の氏名（家族等。キーパーソンがいればその人）
+●familyPhone: 緊急連絡先の固定電話（ハイフン付き）
+●familyMobilePhone: 緊急連絡先の携帯電話（ハイフン付き。familyPhoneと両方ある場合は分けて入れる）
 ●doctorHospital: 主治医の所属病院名
 ●doctorName: 主治医の氏名
 ●supporters: 支援者（配列）。フェイスシート上のケアマネ・相談支援専門員・PSW・ヘルパー・地域包括・作業所担当など「人」は漏れなく全てここへ。

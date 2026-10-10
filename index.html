@@ -458,10 +458,69 @@ const emptyFS = () => ({
   bedrideLevel: "", dementiaLevel: "",
   relatedInstitutions: [],
   referralSource: "", referralPhone: "",
-  familyContact: "", familyPhone: "",
+  familyContact: "", familyPhone: "", familyMobilePhone: "",
   doctorHospital: "", doctorName: "",
+  supporters: [],
   extractedAt: null,
 });
+
+// FS抽出の家族メンバーをアプリ形式（relation/phone/mobilePhone）に正規化
+function normalizeRelation(raw) {
+  const r = String(raw || "").trim();
+  if (!r) return { relation: "", relationOther: "" };
+  if (FAMILY_RELATIONS.includes(r)) return { relation: r, relationOther: "" };
+  // よくある表記ゆれ
+  const map = [
+    [/^配偶者$|^主人$|^旦那/, "夫"],
+    [/^家内$|^奥さん$|^嫁/, "妻"],
+    [/^父親$|^お父さん/, "父"],
+    [/^母親$|^お母さん/, "母"],
+    [/^兄$|^弟$|^兄妹$|^兄弟姉妹/, "兄弟"],
+    [/^姉$|^妹/, "姉妹"],
+    [/^おじい|祖父/, "祖父"],
+    [/^おばあ|祖母/, "祖母"],
+    [/^息子$|^男の子/, "長男"],
+    [/^娘$|^女の子/, "長女"],
+  ];
+  for (const [re, val] of map) {
+    if (re.test(r)) return { relation: val, relationOther: "" };
+  }
+  // 長男・次男などが部分一致
+  for (const fr of FAMILY_RELATIONS) {
+    if (r.includes(fr)) return { relation: fr, relationOther: "" };
+  }
+  return { relation: "その他", relationOther: r };
+}
+
+function normalizeFamilyMemberFromFS(m) {
+  if (!m || typeof m !== "object") return null;
+  const name = String(m.name || "").trim();
+  if (!name) return null;
+  const rel = normalizeRelation(m.relation || m.relationship || "");
+  const phoneRaw1 = m.phone || m.contact || "";
+  const phoneRaw2 = m.mobilePhone || m.mobile || "";
+  const assigned = assignPhones(phoneRaw1, phoneRaw2);
+  // contactだけ1本の場合、携帯/固定の振り分け結果を使う。振り分け不能なら固定欄へ
+  let phone = assigned.phone;
+  let mobilePhone = assigned.mobilePhone;
+  if (!phone && !mobilePhone && phoneRaw1) {
+    const c = classifyPhone(phoneRaw1);
+    if (c.mobile) mobilePhone = phoneRaw1;
+    else phone = phoneRaw1;
+  }
+  return {
+    id: m.id || genFamilyId(),
+    name,
+    relation: rel.relation,
+    relationOther: rel.relationOther,
+    phone: phone || "",
+    mobilePhone: mobilePhone || "",
+    note: m.note || [m.cohabitation, m.occupation, m.age ? (m.age + "歳") : ""].filter(Boolean).join(" / "),
+    ibowPhone: !!m.ibowPhone,
+    ibowMobile: !!m.ibowMobile,
+    isKeyPerson: !!(m.isKeyPerson || m.keyPerson || m.kp),
+  };
+}
 
 // ===== SHARED UI ATOMS =====
 function FSBadge() {
@@ -2674,12 +2733,45 @@ function RecordFormPage({ toast, fs, fsVersion, sharedPrescriptionPhoto, autoOcr
       referralRequest: appendText(prev.referralRequest, fs.referralRequest, 273),
       otherServices: appendText(prev.otherServices, fs.otherServices, 320),
       handoverNotes: appendText(prev.handoverNotes, fs.handoverNotes, 800),
-      // 家族構成：新しいメンバーを追記（既存と重複しない）
+      // 家族構成：FS形式をアプリ形式に正規化して追記（既存と重複しない）
       familyMembers: (() => {
-        if (!fs.familyMembers || !fs.familyMembers.length) return prev.familyMembers;
+        const normalized = (fs.familyMembers || []).map(normalizeFamilyMemberFromFS).filter(Boolean);
+        // 緊急連絡先が家族構成に無い場合はKPとして追加
+        if (fs.familyContact && !normalized.some(m => m.name === fs.familyContact)) {
+          const assigned = assignPhones(fs.familyPhone || "", fs.familyMobilePhone || "");
+          normalized.unshift({
+            id: genFamilyId(),
+            name: fs.familyContact,
+            relation: "",
+            relationOther: "",
+            phone: assigned.phone || fs.familyPhone || "",
+            mobilePhone: assigned.mobilePhone || fs.familyMobilePhone || "",
+            note: "緊急連絡先",
+            ibowPhone: false,
+            ibowMobile: false,
+            isKeyPerson: true,
+          });
+        } else if (fs.familyContact) {
+          normalized.forEach(m => { if (m.name === fs.familyContact) m.isKeyPerson = true; });
+        }
+        if (!normalized.length) return prev.familyMembers;
         const existingNames = new Set((prev.familyMembers || []).map(m => m.name));
-        const newMembers = fs.familyMembers.filter(m => m.name && !existingNames.has(m.name)).map(withFamilyId);
-        return [...(prev.familyMembers || []), ...newMembers];
+        const newMembers = normalized.filter(m => m.name && !existingNames.has(m.name));
+        // 既存の続柄・電話が空なら補完
+        const updatedExisting = (prev.familyMembers || []).map(f => {
+          const src = normalized.find(m => m.name === f.name);
+          if (!src) return f;
+          return {
+            ...f,
+            relation: f.relation || src.relation || "",
+            relationOther: f.relationOther || src.relationOther || "",
+            phone: f.phone || src.phone || "",
+            mobilePhone: f.mobilePhone || src.mobilePhone || "",
+            note: f.note || src.note || "",
+            isKeyPerson: f.isKeyPerson || src.isKeyPerson,
+          };
+        });
+        return [...updatedExisting, ...newMembers];
       })(),
       // 関連機関：新しい機関を追記
       relatedInstitutions: (() => {
@@ -2765,10 +2857,35 @@ function RecordFormPage({ toast, fs, fsVersion, sharedPrescriptionPhoto, autoOcr
         otherInfo: appendText(prev.otherInfo, r.otherInfo, 2000),
         // 家族構成：追記
         familyMembers: (() => {
-          if (!r.familyMembers || !r.familyMembers.length) return prev.familyMembers;
+          const normalized = (r.familyMembers || []).map(normalizeFamilyMemberFromFS).filter(Boolean);
+          if (r.familyContact && !normalized.some(m => m.name === r.familyContact)) {
+            const assigned = assignPhones(r.familyPhone || "", r.familyMobilePhone || "");
+            normalized.unshift({
+              id: genFamilyId(),
+              name: r.familyContact,
+              relation: "", relationOther: "",
+              phone: assigned.phone || r.familyPhone || "",
+              mobilePhone: assigned.mobilePhone || r.familyMobilePhone || "",
+              note: "緊急連絡先", ibowPhone: false, ibowMobile: false, isKeyPerson: true,
+            });
+          }
+          if (!normalized.length) return prev.familyMembers;
           const existingNames = new Set((prev.familyMembers || []).map(m => m.name));
-          const newMembers = r.familyMembers.filter(m => m.name && !existingNames.has(m.name)).map(withFamilyId);
-          return [...(prev.familyMembers || []), ...newMembers];
+          const newMembers = normalized.filter(m => m.name && !existingNames.has(m.name));
+          const updatedExisting = (prev.familyMembers || []).map(f => {
+            const src = normalized.find(m => m.name === f.name);
+            if (!src) return f;
+            return {
+              ...f,
+              relation: f.relation || src.relation || "",
+              relationOther: f.relationOther || src.relationOther || "",
+              phone: f.phone || src.phone || "",
+              mobilePhone: f.mobilePhone || src.mobilePhone || "",
+              note: f.note || src.note || "",
+              isKeyPerson: f.isKeyPerson || src.isKeyPerson,
+            };
+          });
+          return [...updatedExisting, ...newMembers];
         })(),
         // 関連機関：追記
         relatedInstitutions: (() => {
@@ -2911,7 +3028,11 @@ function RecordFormPage({ toast, fs, fsVersion, sharedPrescriptionPhoto, autoOcr
               if (fields.diseaseAwareness) lines.push('【病識の有無/程度】\n' + fields.diseaseAwareness);
               if (fields.familyMembers && fields.familyMembers.length) {
                 const fm = fields.familyMembers.filter(m => m.name).map(m =>
-                  m.name + (m.relationship ? '（' + m.relationship + '）' : '') + (m.cohabitation ? ' ' + m.cohabitation : '') + (m.contact ? ' TEL:' + m.contact : '') + (m.isKeyPerson ? ' ★KP' : '')
+                  m.name
+                  + ((m.relation || m.relationship) ? '（' + (m.relation === 'その他' && m.relationOther ? m.relationOther : (m.relation || m.relationship)) + '）' : '')
+                  + (m.cohabitation ? ' ' + m.cohabitation : '')
+                  + (m.phone || m.mobilePhone || m.contact ? ' TEL:' + [m.phone, m.mobilePhone, m.contact].filter(Boolean).join(' / ') : '')
+                  + (m.isKeyPerson ? ' ★KP' : '')
                 );
                 if (fm.length) lines.push('【家族構成】\n' + fm.join('\n'));
               }
@@ -3128,13 +3249,67 @@ function ContractPage({ fs, toast, onPrescriptionPhoto, patientId, initialContra
     }));
     // 指示書：依頼先・主治医（既存がなければ設定）
     if (fs.doctorHospital) setContractData(p => ({ ...p, instructionDest: p.instructionDest || fs.doctorHospital, instructionDoctor: p.instructionDoctor || fs.doctorName || "" }));
-    // 緊急：家族（既存リストに追記、重複しない）
-    if (fs.familyContact) setEmergencyData(p => {
-      const existingNames = new Set(p.family.map(f => f.name).filter(Boolean));
-      if (existingNames.has(fs.familyContact)) return p;
-      const newEntry = { id: genFamilyId(), name: fs.familyContact, relation: "", relationOther: "", phone: fs.familyPhone || "", mobilePhone: fs.familyMobilePhone || "", note: "" };
-      return { ...p, familyMode: "有", family: [newEntry, ...p.family] };
-    });
+    // 緊急：家族（familyMembers + 緊急連絡先を統合して反映）
+    (() => {
+      const fromMembers = (fs.familyMembers || []).map(normalizeFamilyMemberFromFS).filter(Boolean);
+      // familyContact が familyMembers に無い場合は追加（KP扱い）
+      if (fs.familyContact) {
+        const exists = fromMembers.some(m => m.name === fs.familyContact);
+        if (!exists) {
+          const assigned = assignPhones(fs.familyPhone || "", fs.familyMobilePhone || "");
+          fromMembers.unshift({
+            id: genFamilyId(),
+            name: fs.familyContact,
+            relation: "",
+            relationOther: "",
+            phone: assigned.phone || fs.familyPhone || "",
+            mobilePhone: assigned.mobilePhone || fs.familyMobilePhone || "",
+            note: "緊急連絡先",
+            ibowPhone: false,
+            ibowMobile: false,
+            isKeyPerson: true,
+          });
+        } else {
+          fromMembers.forEach(m => {
+            if (m.name === fs.familyContact) {
+              m.isKeyPerson = true;
+              // 電話が空なら familyPhone / familyMobilePhone で補完
+              if (!m.phone && !m.mobilePhone) {
+                const assigned = assignPhones(fs.familyPhone || "", fs.familyMobilePhone || "");
+                m.phone = assigned.phone || fs.familyPhone || "";
+                m.mobilePhone = assigned.mobilePhone || fs.familyMobilePhone || "";
+              }
+            }
+          });
+        }
+      }
+      if (!fromMembers.length) return;
+      // KPを先頭に
+      fromMembers.sort((a, b) => (b.isKeyPerson ? 1 : 0) - (a.isKeyPerson ? 1 : 0));
+      setEmergencyData(p => {
+        const existingNames = new Set(p.family.map(f => f.name).filter(Boolean));
+        const toAdd = fromMembers.filter(m => m.name && !existingNames.has(m.name));
+        if (!toAdd.length) {
+          // 既存メンバーの電話・続柄・KPを補完
+          const updated = p.family.map(f => {
+            const src = fromMembers.find(m => m.name === f.name);
+            if (!src) return f;
+            return {
+              ...f,
+              relation: f.relation || src.relation || "",
+              relationOther: f.relationOther || src.relationOther || "",
+              phone: f.phone || src.phone || "",
+              mobilePhone: f.mobilePhone || src.mobilePhone || "",
+              note: f.note || src.note || "",
+              isKeyPerson: f.isKeyPerson || src.isKeyPerson,
+            };
+          });
+          return { ...p, familyMode: "有", family: updated };
+        }
+        const kept = p.family.filter(f => f.name);
+        return { ...p, familyMode: "有", family: [...toAdd, ...kept, { id: genFamilyId(), name: "", relation: "", relationOther: "", phone: "", mobilePhone: "", note: "", ibowPhone: false, ibowMobile: false, isKeyPerson: false }] };
+      });
+    })();
     // 緊急：主治医（既存がなければ設定）
     if (fs.doctorHospital) setEmergencyData(p => ({
       ...p, doctor: {
