@@ -294,14 +294,16 @@ app.post('/api/ocr-card', verifySignature, limitOCR, async (req, res) => {
             { text: `この名刺画像から以下のJSONを抽出してください。
 
 【重要ルール】
-- name: 人物の氏名のみ（姓名）。役職・資格・会社名は絶対に含めない。日本人名は2〜5文字程度。
-- organization: 会社名・病院名・施設名など組織名
-- role: 役職・資格（代表取締役、看護師、ケアマネ等）
-- phone: 電話番号（ハイフン付き）
-- note: その他の情報
+- name: 人物の氏名のみ（姓名）。役職・資格・会社名は絶対に含めない。日本人名は漢字2〜8文字程度（「山田 太郎」「山田太郎」どちらでも可）。
+- organization: 会社名・病院名・事業所・施設名など組織名
+- role: 役職・資格・職種（例: ケアマネジャー、介護支援専門員、PSW、相談支援専門員、看護師、代表取締役）
+- phone: 電話番号（ハイフン付き。携帯があれば携帯を優先。なければ代表電話）
+- note: メール・住所・FAXなどその他
 
-名前と役職・資格を混同しないこと。「代表取締役 山田太郎」なら name=山田太郎、role=代表取締役。
-JSONのみ返すこと。` }
+名前と役職・資格を混同しないこと。
+例) 「ケアマネジャー 山田太郎 / ○○居宅介護支援事業所 / 090-1234-5678」
+→ {"name":"山田太郎","organization":"○○居宅介護支援事業所","role":"ケアマネジャー","phone":"090-1234-5678","note":""}
+読み取れない項目は空文字""。JSONのみ返すこと。` }
           ] }],
           generationConfig: { maxOutputTokens: 500, temperature: 0.1, responseMimeType: "application/json" },
         }),
@@ -416,7 +418,14 @@ ${hasImages ? (hasPdf
 ●familyMobilePhone: 緊急連絡先の携帯電話
 ●doctorHospital: 主治医の所属病院名
 ●doctorName: 主治医の氏名
-●supporters: 支援者（配列）。ケアマネ・相談員・PSW等。role/name/phone/note(所属)
+●supporters: 支援者（配列）。フェイスシート上のケアマネ・相談支援専門員・PSW・ヘルパー・地域包括・作業所担当など「人」は漏れなく全てここへ。
+  各要素のフィールド:
+  - role: 役割（ケアマネ/PSW/相談支援専門員/ヘルパー/地域包括/作業所/デイサービス 等。正式名称で）
+  - name: 氏名のみ（機関名・事業所名は入れない）
+  - phone: 電話番号（ハイフン付き。携帯・固定どちらでも）
+  - organization: 所属先・事業所名・法人名
+  - note: その他備考（連絡可能時間など）
+  機関名だけの記載（担当者名なし）はsupportersではなくrelatedInstitutionsへ。
 
 【ADL（日常生活動作）の振り分け — 記載がある場合のみ】
 各項目のsupport("要援助"or"援助不要"or"")とlevel("自立"or"一部介助"or"全介助"or"")を判定：

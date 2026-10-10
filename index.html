@@ -826,35 +826,50 @@ function MultiPhotoBtn({ photos, onPhotos, label = "写真" }) {
   );
 }
 
-// Business card scan
+// Business card scan（カメラ／ファイル両対応。HEIC等はJPEGに変換してから送信）
 function CardScanBtn({ onResult, toast }) {
-  const ref = useRef();
+  const camRef = useRef();
+  const fileRef = useRef();
   const [scanning, setScanning] = useState(false);
-  const handle = e => {
-    const f = e.target.files && e.target.files[0]; if (!f) return;
+  const handle = async e => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    // 同じファイルを連続選択できるようにリセット
+    e.target.value = "";
     setScanning(true);
-    const r = new FileReader();
-    r.onload = async ev => {
-      try {
-        const data = ev.target.result.split(",")[1];
-        const res = await _apiPost("/api/ocr-card", { base64Image: data, mimeType: f.type });
-        const parsed = await res.json();
-        if (!parsed.success) throw new Error(parsed.error || "読み取り失敗");
-        onResult(parsed);
-        toast.success("名刺を読み取りました");
-      } catch (e3) { toast.error("名刺の読み取りに失敗しました"); }
-      finally { setScanning(false); }
-    };
-    r.readAsDataURL(f);
+    try {
+      // iPhoneのHEIC等でもGeminiが読めるようJPEGへ変換・リサイズ
+      const resized = await resizeImage(f, 1600, 0.85);
+      const data = resized.split(",")[1];
+      if (!data) throw new Error("画像の読み込みに失敗しました");
+      const res = await _apiPost("/api/ocr-card", { base64Image: data, mimeType: "image/jpeg" });
+      const parsed = await res.json();
+      if (!parsed.success) throw new Error(parsed.error || "読み取り失敗");
+      if (!parsed.name && !parsed.phone && !parsed.organization) {
+        throw new Error("名刺から情報を抽出できませんでした。明るい場所で撮り直してください");
+      }
+      onResult(parsed);
+      toast.success("名刺を読み取りました");
+    } catch (e3) {
+      toast.error("名刺の読み取りに失敗しました: " + (e3.message || "不明なエラー"));
+    } finally {
+      setScanning(false);
+    }
   };
   return (
-    React.createElement('div', null
-      , React.createElement('button', { onClick: () => ref.current && ref.current.click(), disabled: scanning,
-        className: "flex flex-col items-center justify-center gap-1.5 px-6 py-4 bg-purple-100 border border-purple-300 rounded-xl text-purple-700 font-bold active:scale-95 disabled:opacity-50 min-h-[72px]"               ,}
-        , React.createElement('span', { className: "text-2xl leading-none" ,}, "🪪")
-        , React.createElement('span', { className: "text-sm",}, scanning ? "読み取り中…" : "名刺スキャン")
+    React.createElement('div', { className: "flex gap-1" }
+      , React.createElement('button', { type: "button", onClick: () => camRef.current && camRef.current.click(), disabled: scanning,
+        className: "flex flex-col items-center justify-center gap-1 px-3 py-3 bg-purple-100 border border-purple-300 rounded-xl text-purple-700 font-bold active:scale-95 disabled:opacity-50 min-h-[64px]" }
+        , React.createElement('span', { className: "text-xl leading-none" }, "🪪")
+        , React.createElement('span', { className: "text-xs" }, scanning ? "読取中…" : "名刺撮影")
       )
-      , React.createElement('input', { ref: ref, type: "file", accept: "image/*", capture: "environment", className: "hidden", onChange: handle,} )
+      , React.createElement('button', { type: "button", onClick: () => fileRef.current && fileRef.current.click(), disabled: scanning,
+        className: "flex flex-col items-center justify-center gap-1 px-3 py-3 bg-purple-50 border border-purple-200 rounded-xl text-purple-700 font-bold active:scale-95 disabled:opacity-50 min-h-[64px]" }
+        , React.createElement('span', { className: "text-xl leading-none" }, "📁")
+        , React.createElement('span', { className: "text-xs" }, "画像選択")
+      )
+      , React.createElement('input', { ref: camRef, type: "file", accept: "image/*", capture: "environment", className: "hidden", onChange: handle })
+      , React.createElement('input', { ref: fileRef, type: "file", accept: "image/*", className: "hidden", onChange: handle })
     )
   );
 }
@@ -1162,6 +1177,26 @@ const initOffice = () => ({
 const SUPPORTER_ROLES = ["PSW","ケアマネ","地域包括","ヘルパー","作業所（職場）","デイサービス・デイケア","その他"];
 const TEAMS = ["身体チーム","天理チーム","北部チーム","南部チーム"];
 const APPLICANTS = ["本人","家族","ひなた","その他"];
+
+// 名刺OCR・FS抽出の役割表記をアプリの選択肢に正規化する
+function normalizeSupporterRole(rawRole) {
+  const r = String(rawRole || "").trim();
+  if (!r) return { role: "", roleOther: "" };
+  if (SUPPORTER_ROLES.includes(r)) return { role: r, roleOther: "" };
+  const rules = [
+    [/ケアマネ|介護支援専門員|\bCM\b/i, "ケアマネ"],
+    [/PSW|精神保健福祉士|ソーシャル\s*ワーカー/i, "PSW"],
+    [/地域包括/i, "地域包括"],
+    [/ヘルパー|訪問介護/i, "ヘルパー"],
+    [/作業所|就労継続|就労移行|B型|A型/i, "作業所（職場）"],
+    [/デイサービス|デイケア|通所介護|通所リハ/i, "デイサービス・デイケア"],
+  ];
+  for (const [re, val] of rules) {
+    if (re.test(r)) return { role: val, roleOther: "" };
+  }
+  // 相談支援専門員など選択肢外は「その他」に入れ、原文を残す
+  return { role: "その他", roleOther: r };
+}
 
 // ===== CONTRACT TAB =====
 function ContractTab({ data, setData, fs, onPrescriptionPhoto, toast }) {
@@ -2138,7 +2173,15 @@ function EmergencyTab({ data, setData, fs, contractData, toast }) {
   const rmSup = (i) => setData(p => ({ ...p, supporters: p.supporters.filter((_, j) => j !== i) }));
 
   const handleCardScan = (i) => (result) => {
-    updSup(i, { name: result.name || "", phone: result.phone || "", note: [result.organization, result.note].filter(Boolean).join(" / ") });
+    const mapped = normalizeSupporterRole(result.role);
+    const noteParts = [result.organization, result.note].filter(Boolean);
+    updSup(i, {
+      name: result.name || "",
+      phone: result.phone || "",
+      role: mapped.role || "",
+      roleOther: mapped.roleOther || "",
+      note: noteParts.join(" / "),
+    });
   };
 
   const ibowTotal = [
@@ -3101,15 +3144,41 @@ function ContractPage({ fs, toast, onPrescriptionPhoto, patientId, initialContra
     }));
     // 緊急：支援者（既存リストに追記、重複しない）
     const newSupporters = [];
-    if (fs.referralSource) newSupporters.push({ role: "", roleOther: "依頼元", name: fs.referralSource, phone: fs.referralPhone || "", note: "" });
+    // 依頼元は機関名なので氏名欄ではなく備考（所属）へ入れる
+    if (fs.referralSource) {
+      newSupporters.push({
+        role: "その他",
+        roleOther: "依頼元",
+        name: "",
+        phone: fs.referralPhone || "",
+        note: fs.referralSource,
+      });
+    }
     if (fs.supporters && fs.supporters.length) {
-      fs.supporters.forEach(s => newSupporters.push({ role: s.role || "", roleOther: "", name: s.name || "", phone: s.phone || "", note: s.note || "" }));
+      fs.supporters.forEach(s => {
+        if (!s.name && !s.phone && !s.organization && !s.note) return;
+        const mapped = normalizeSupporterRole(s.role);
+        const noteParts = [s.organization, s.note].filter(Boolean);
+        newSupporters.push({
+          role: mapped.role || "",
+          roleOther: mapped.roleOther || "",
+          name: s.name || "",
+          phone: s.phone || "",
+          note: noteParts.join(" / "),
+        });
+      });
     }
     if (newSupporters.length) setEmergencyData(p => {
       const existingNames = new Set(p.supporters.map(s => s.name).filter(Boolean));
-      const toAdd = newSupporters.filter(s => s.name && !existingNames.has(s.name));
+      const existingNotes = new Set(p.supporters.map(s => s.note).filter(Boolean));
+      const toAdd = newSupporters.filter(s => {
+        if (s.name && existingNames.has(s.name)) return false;
+        // 依頼元など氏名なしは備考（所属）で重複判定
+        if (!s.name && s.note && existingNotes.has(s.note)) return false;
+        return !!(s.name || s.note || s.phone);
+      });
       if (!toAdd.length) return p;
-      return { ...p, supporters: [...p.supporters.filter(s => s.name), ...toAdd, { role: "", roleOther: "", name: "", phone: "", note: "" }] };
+      return { ...p, supporters: [...p.supporters.filter(s => s.name || s.note), ...toAdd, { role: "", roleOther: "", name: "", phone: "", note: "" }] };
     });
   }, [fs.extractedAt]);
 
