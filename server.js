@@ -398,9 +398,9 @@ ${hasImages ? (hasPdf
 ●phone: 固定電話（ハイフン付き）
 ●mobilePhone: 携帯電話（ハイフン付き）
 ●mainDiagnosis: 主傷病名（メインの診断名1つ。正式な医学用語で）
-●medicalHistory: 【既往歴及び現病歴】過去にかかった病気・手術歴・発症時期・経過。現在の病気がいつ発症しどう経過したか。入院歴。（目安360字）
-●currentCondition: 【病状・治療状態・処方内容】現在の症状・状態、通院中の病院と頻度、受けている治療、服用中の薬の名前と量。（目安440字）
-●diseaseAwareness: 【病識の有無/程度】本人が自分の病気をどの程度理解・自覚しているか。「病識あり」「一部理解」「病識なし」等。（目安280字）
+●medicalHistory: 【既往歴及び現病歴】過去の病気・手術歴・発症時期・経過・入院歴のみ。現在の症状・処方・通院頻度は入れない。（目安360字）
+●currentCondition: 【病状・治療状態・処方内容】現在の症状・状態、通院先と頻度、治療、処方薬の名前と量のみ。既往の経過説明はmedicalHistory側に任せ、繰り返さない。（目安440字）
+●diseaseAwareness: 【病識の有無/程度】本人の病識・理解度のみ。「病識あり」「一部理解」「病識なし」等。病歴・処方の再掲はしない。（目安280字）
 ●familyMembers: 家族構成（配列）。フェイスシートの家族構成図・一覧に載っている家族は漏れなく全員抽出する。
   各要素:
   - name: 氏名
@@ -418,7 +418,7 @@ ${hasImages ? (hasPdf
 ●familyRequest: 【家族の要望】家族が訪問看護に求めること・希望・心配事。（目安273字）
 ●referralRequest: 【依頼機関の要望】依頼元（病院・ケアマネ等）が訪問看護に求めること・依頼理由。（目安273字）
 ●otherServices: 【その他サービスの利用状況】デイサービス・ヘルパー・デイケア・訪問リハ・ショートステイ等、訪問看護以外に利用中のサービス一覧。（目安320字）
-●handoverNotes: 【スタッフへの申し送り事項】上記のどの項目にも当てはまらない情報は全てここに入れる。注意事項・生活背景・経済状況・住環境・近隣との関係・趣味嗜好・宗教・アレルギー・禁忌事項・過去のトラブル・コミュニケーション上の注意点等。フェイスシートの情報で他の項目に振り分けられなかったものは全てここ。（目安800字）
+●handoverNotes: 【スタッフへの申し送り事項】FSに「申し送り」「特記事項」「注意事項」として明示された内容のみ。他項目に既に入れた病歴・病状・要望・サービス内容の再掲は禁止。（目安800字）
 ●bedrideLevel: 障害老人日常生活自立度（J1/J2/A1/A2/B1/B2/C1/C2のいずれか。記載なしは""）
 ●dementiaLevel: 認知症日常生活自立度（Ⅰ/Ⅱa/Ⅱb/Ⅲa/Ⅲb/Ⅳ/Mのいずれか。記載なしは""）
 ●relatedInstitutions: 関連機関（配列）。かかりつけ病院・薬局・相談支援事業所等。name/phone/contact(担当者名)
@@ -469,9 +469,10 @@ ${hasImages ? (hasPdf
 - 冗長な言い回し・同じ内容の繰り返し・挨拶文・欄外の装飾的文言は要約・省略してよい
 - 疾患名・発症時期・処方薬・受診先・頻度・ADLの要点・注意事項・禁忌・キーパーソン情報など固有の事実は省略しない
 - 目安を大幅に超える場合は、事実を残したまま簡潔な看護記録向けの文言に整える（情報欠落より簡潔化を優先）
-- 1つの情報は最も適切な1つの項目に入れる（重複記載しない）
-- handoverNotes: FSに「申し送り」「特記事項」「注意事項」として記載されている内容のみ
-- otherInfo: 上記の全フィールドに振り分けられなかった残り全ての情報をここに集約する（生活背景・経済状況・住環境・趣味嗜好・アレルギー・宗教・その他の注釈等）
+- 【重複禁止】1つの事実・文は最も適切な1項目にのみ入れる。medicalHistory↔currentCondition↔要望系↔otherServices↔handoverNotes↔otherInfo 間で同じ文や同趣旨の繰り返しを書かない
+- 【項目内重複禁止】同一項目内でも同じ内容を言い換えて繰り返さない。1回だけ書く
+- handoverNotes: FSに「申し送り」「特記事項」「注意事項」として記載されている内容のみ（他項目の要約コピーはしない）
+- otherInfo: 上記の全フィールドに振り分けられなかった残りのみ（生活背景・経済状況・住環境・趣味嗜好・アレルギー・宗教等）。他項目の再掲は空でもよいので重複させない
 - 情報がないフィールドは空文字""。推測で埋めない
 ${supplementText ? '\n【補足テキスト（利用者の追加情報。各項目に正確に振り分けること）】\n' + supplementText + '\n' : ''}
 ${visionOcrResult ? '【事前OCRテキスト（参考・誤読注意）】\n' + visionOcrResult.slice(0, 6000) + '\n\n' : ''}改行なしの1行コンパクトJSONで返してください:
@@ -511,7 +512,7 @@ ${visionOcrResult ? '【事前OCRテキスト（参考・誤読注意）】\n' +
         // nullを空文字に
         jsonStr = jsonStr.replace(/:\s*null\b/g, ': ""');
         try {
-          const parsed = JSON.parse(jsonStr);
+          const parsed = dedupeNursingTextFields(JSON.parse(jsonStr));
           console.log('Gemini FSパース成功: userName=' + (parsed.userName || '空') + ', fields=' + Object.keys(parsed).filter(k => parsed[k] && parsed[k] !== '').length);
           parsed.extractedAt = new Date().toISOString();
           return res.json({ success: true, data: parsed });
@@ -521,7 +522,7 @@ ${visionOcrResult ? '【事前OCRテキスト（参考・誤読注意）】\n' +
           // 最終手段: 各フィールドを正規表現で個別抽出
           const extract = (key) => { const m = jsonStr.match(new RegExp('"' + key + '"\\s*:\\s*"([^"]*)"')); return m ? m[1] : ''; };
           const extractArr = (key) => { const m = jsonStr.match(new RegExp('"' + key + '"\\s*:\\s*(\\[.*?\\])', 's')); try { return m ? JSON.parse(m[1]) : []; } catch(e) { return []; } };
-          const fallbackParsed = {
+          const fallbackParsed = dedupeNursingTextFields({
             userName: extract('userName'), nameKana: extract('nameKana'), gender: extract('gender'),
             age: extract('age'), birthDate: extract('birthDate'), address: extract('address'),
             phone: extract('phone'), mobilePhone: extract('mobilePhone'),
@@ -537,8 +538,9 @@ ${visionOcrResult ? '【事前OCRテキスト（参考・誤読注意）】\n' +
             doctorHospital: extract('doctorHospital'), doctorName: extract('doctorName'),
             familyMembers: extractArr('familyMembers'), supporters: extractArr('supporters'),
             relatedInstitutions: extractArr('relatedInstitutions'),
+            otherInfo: extract('otherInfo'),
             extractedAt: new Date().toISOString(),
-          };
+          });
           console.log('正規表現抽出フォールバック: userName=' + (fallbackParsed.userName || '空'));
           return res.json({ success: true, data: fallbackParsed });
         }
@@ -554,7 +556,7 @@ ${visionOcrResult ? '【事前OCRテキスト（参考・誤読注意）】\n' +
     // フォールバック: 既にVision OCRで取得済みのテキストを使用
     let allText = visionOcrResult;
     if (supplementText) allText += '\n' + sanitizeString(supplementText, 5000);
-    const parsed = parseFacesheet(allText);
+    const parsed = dedupeNursingTextFields(parseFacesheet(allText));
     parsed.extractedAt = new Date().toISOString();
     res.json({ success: true, data: parsed });
   } catch (err) {
@@ -700,6 +702,81 @@ function parseBusinessCard(text) {
   }
   note = lines.filter(l => l !== name && l !== organization && l !== role && !phonePattern.test(l)).join(' ').slice(0, 200);
   return { name, organization, role, phone, note };
+}
+
+/** 看護記録Ⅰテキスト項目の項目内・項目間重複を除去 */
+function normalizeForDedupe(s) {
+  return String(s || '').replace(/[\s　]+/g, '').replace(/[、，。．・]/g, '');
+}
+function splitRecordSentences(text) {
+  const raw = String(text || '');
+  const parts = [];
+  let buf = '';
+  for (let i = 0; i < raw.length; i++) {
+    const ch = raw[i];
+    buf += ch;
+    if (/[。．！？\n]/.test(ch)) {
+      const t = buf.trim();
+      if (t) parts.push(t);
+      buf = '';
+    }
+  }
+  if (buf.trim()) parts.push(buf.trim());
+  return parts;
+}
+function dedupeSentencesInText(text) {
+  const parts = splitRecordSentences(text);
+  const kept = [];
+  for (let i = 0; i < parts.length; i++) {
+    const n = normalizeForDedupe(parts[i]);
+    if (n.length < 4) { kept.push(parts[i]); continue; }
+    let dup = false;
+    for (let j = 0; j < kept.length; j++) {
+      const kn = normalizeForDedupe(kept[j]);
+      if (!kn) continue;
+      if (kn === n || kn.includes(n) || n.includes(kn)) { dup = true; break; }
+    }
+    if (!dup) kept.push(parts[i]);
+  }
+  let out = '';
+  for (let i = 0; i < kept.length; i++) {
+    const p = kept[i];
+    if (!out) out = p;
+    else if (/[。．！？\n]$/.test(out)) out += p;
+    else out += '\n' + p;
+  }
+  return out.trim();
+}
+function stripOverlappingSentences(text, corpusNorm) {
+  if (!text || !corpusNorm) return dedupeSentencesInText(text);
+  const parts = splitRecordSentences(text);
+  const kept = [];
+  for (let i = 0; i < parts.length; i++) {
+    const raw = parts[i];
+    const n = normalizeForDedupe(raw);
+    const core = normalizeForDedupe(raw.replace(/^【[^】]+】/, ''));
+    if (n.length >= 8 && corpusNorm.includes(n)) continue;
+    if (core.length >= 8 && corpusNorm.includes(core)) continue;
+    kept.push(raw);
+  }
+  return dedupeSentencesInText(kept.join('\n'));
+}
+function dedupeNursingTextFields(data) {
+  if (!data || typeof data !== 'object') return data;
+  const keys = [
+    'medicalHistory', 'currentCondition', 'diseaseAwareness', 'familySpecialNotes',
+    'patientRequest', 'familyRequest', 'referralRequest', 'otherServices',
+    'handoverNotes', 'otherInfo'
+  ];
+  let corpus = '';
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i];
+    let t = dedupeSentencesInText(data[key] || '');
+    if (corpus) t = stripOverlappingSentences(t, corpus);
+    data[key] = t;
+    corpus += normalizeForDedupe(t);
+  }
+  return data;
 }
 
 function parseFacesheet(text) {

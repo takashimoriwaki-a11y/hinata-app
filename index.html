@@ -2691,16 +2691,8 @@ function RecordFormPage({ toast, fs, fsVersion, sharedPrescriptionPhoto, autoOcr
 
   useEffect(() => {
     if (!fs.extractedAt) return;
-    // 記録書Ⅰに入りきらない情報をotherInfoにまとめる
-    const extraParts = [];
-    if (fs.referralSource) extraParts.push('【依頼元】' + fs.referralSource + (fs.referralPhone ? ' ' + fs.referralPhone : ''));
-    if (fs.familyContact) extraParts.push('【緊急連絡先】' + fs.familyContact + (fs.familyPhone ? ' ' + fs.familyPhone : ''));
-    if (fs.doctorHospital) extraParts.push('【主治医】' + (fs.doctorName || '') + '（' + fs.doctorHospital + '）');
-    if (fs.supporters && fs.supporters.length) {
-      fs.supporters.forEach(s => { if (s.name) extraParts.push('【' + (s.role || '支援者') + '】' + s.name + (s.phone ? ' ' + s.phone : '') + (s.note ? ' ' + s.note : '')); });
-    }
-    if (fs.referralRequest) extraParts.push('【依頼内容】' + fs.referralRequest);
-    setFields(prev => ({
+    setFields(prev => {
+      const next = {
       ...prev,
       // 基本情報：既存がある場合は上書きしない
       name: fs.userName || prev.name,
@@ -2723,16 +2715,16 @@ function RecordFormPage({ toast, fs, fsVersion, sharedPrescriptionPhoto, autoOcr
       mainDiagnosis: fs.mainDiagnosis || prev.mainDiagnosis,
       bedrideLevel: fs.bedrideLevel || prev.bedrideLevel,
       dementiaLevel: fs.dementiaLevel || prev.dementiaLevel,
-      // テキスト項目：既存データがある場合は下に追記
-      medicalHistory: appendText(prev.medicalHistory, fs.medicalHistory, 360),
-      currentCondition: appendText(prev.currentCondition, fs.currentCondition, 440),
-      diseaseAwareness: appendText(prev.diseaseAwareness, fs.diseaseAwareness, 280),
-      familySpecialNotes: appendText(prev.familySpecialNotes, fs.familySpecialNotes, 280),
-      patientRequest: appendText(prev.patientRequest, fs.patientRequest, 273),
-      familyRequest: appendText(prev.familyRequest, fs.familyRequest, 273),
-      referralRequest: appendText(prev.referralRequest, fs.referralRequest, 273),
-      otherServices: appendText(prev.otherServices, fs.otherServices, 320),
-      handoverNotes: appendText(prev.handoverNotes, fs.handoverNotes, 800),
+      // テキスト項目：既存データがある場合は下に追記（重複は後段で除去）
+      medicalHistory: appendText(prev.medicalHistory, fs.medicalHistory),
+      currentCondition: appendText(prev.currentCondition, fs.currentCondition),
+      diseaseAwareness: appendText(prev.diseaseAwareness, fs.diseaseAwareness),
+      familySpecialNotes: appendText(prev.familySpecialNotes, fs.familySpecialNotes),
+      patientRequest: appendText(prev.patientRequest, fs.patientRequest),
+      familyRequest: appendText(prev.familyRequest, fs.familyRequest),
+      referralRequest: appendText(prev.referralRequest, fs.referralRequest),
+      otherServices: appendText(prev.otherServices, fs.otherServices),
+      handoverNotes: appendText(prev.handoverNotes, fs.handoverNotes),
       // 家族構成：FS形式をアプリ形式に正規化して追記（既存と重複しない）
       familyMembers: (() => {
         const normalized = (fs.familyMembers || []).map(normalizeFamilyMemberFromFS).filter(Boolean);
@@ -2781,8 +2773,8 @@ function RecordFormPage({ toast, fs, fsVersion, sharedPrescriptionPhoto, autoOcr
         const toAdd = newInst.filter(i => i.name && !existingNames.has(i.name));
         return [...(prev.relatedInstitutions || []), ...toAdd];
       })(),
-      // その他情報：extraParts + Geminiが振り分けられなかった情報を追記
-      otherInfo: appendText(appendText(prev.otherInfo, extraParts.join('\n'), 2000), fs.otherInfo, 2000),
+      // その他情報：他項目に振り分けられなかった残りのみ（依頼元・緊急連絡・主治医等の再掲はしない）
+      otherInfo: appendText(prev.otherInfo, fs.otherInfo),
       // ADL：FSに情報があれば自動反映（既存データがある場合は上書きしない）
       ...(['adlEating','adlHygiene','adlToileting','adlSleep','adlDailyRhythm','adlMedication','adlFinance','adlDayCare','adlInterpersonal','adlNurseComm'].reduce((acc, key) => {
         if (fs[key] && (fs[key].support || fs[key].level)) {
@@ -2794,7 +2786,9 @@ function RecordFormPage({ toast, fs, fsVersion, sharedPrescriptionPhoto, autoOcr
         }
         return acc;
       }, {})),
-    }));
+    };
+      return dedupeNursingTextFields(next);
+    });
     setHasExtracted(true);
   }, [fsVersion]); // fsVersionが変わるたびに確実に発火
 
@@ -2826,7 +2820,7 @@ function RecordFormPage({ toast, fs, fsVersion, sharedPrescriptionPhoto, autoOcr
       const result = await res.json();
       if (!result.success) throw new Error(result.error || "抽出失敗");
       const r = result.data;
-      setFields(prev => ({
+      setFields(prev => dedupeNursingTextFields({
         ...prev,
         // 基本情報：既存がなければ新規設定（userName→name のマッピング）
         name: r.userName || r.name || prev.name,
@@ -2844,17 +2838,17 @@ function RecordFormPage({ toast, fs, fsVersion, sharedPrescriptionPhoto, autoOcr
         recordDate: r.recordDate || prev.recordDate,
         bedrideLevel: r.bedrideLevel || prev.bedrideLevel,
         dementiaLevel: r.dementiaLevel || prev.dementiaLevel,
-        // テキスト項目：既存データに追記
-        medicalHistory: appendText(prev.medicalHistory, r.medicalHistory, 360),
-        currentCondition: appendText(prev.currentCondition, r.currentCondition, 440),
-        diseaseAwareness: appendText(prev.diseaseAwareness, r.diseaseAwareness, 280),
-        familySpecialNotes: appendText(prev.familySpecialNotes, r.familySpecialNotes, 280),
-        patientRequest: appendText(prev.patientRequest, r.patientRequest, 273),
-        familyRequest: appendText(prev.familyRequest, r.familyRequest, 273),
-        referralRequest: appendText(prev.referralRequest, r.referralRequest, 273),
-        otherServices: appendText(prev.otherServices, r.otherServices, 320),
-        handoverNotes: appendText(prev.handoverNotes, r.handoverNotes, 800),
-        otherInfo: appendText(prev.otherInfo, r.otherInfo, 2000),
+        // テキスト項目：既存データに追記（重複は後段で除去）
+        medicalHistory: appendText(prev.medicalHistory, r.medicalHistory),
+        currentCondition: appendText(prev.currentCondition, r.currentCondition),
+        diseaseAwareness: appendText(prev.diseaseAwareness, r.diseaseAwareness),
+        familySpecialNotes: appendText(prev.familySpecialNotes, r.familySpecialNotes),
+        patientRequest: appendText(prev.patientRequest, r.patientRequest),
+        familyRequest: appendText(prev.familyRequest, r.familyRequest),
+        referralRequest: appendText(prev.referralRequest, r.referralRequest),
+        otherServices: appendText(prev.otherServices, r.otherServices),
+        handoverNotes: appendText(prev.handoverNotes, r.handoverNotes),
+        otherInfo: appendText(prev.otherInfo, r.otherInfo),
         // 家族構成：追記
         familyMembers: (() => {
           const normalized = (r.familyMembers || []).map(normalizeFamilyMemberFromFS).filter(Boolean);
@@ -4134,30 +4128,107 @@ function assignPhones(num1, num2) {
 }
 
 // FSの追記ヘルパー：既存データの下に新情報を追記（重複除去）
-function appendText(existing, newText, maxLen) {
-  // maxLen は目安表示用のため切り詰めない（全情報を保持）。未指定時もそのまま結合。
-  if (!newText) return existing;
-  if (!existing) return newText;
-  const normEx = existing.replace(/\s+/g, '');
-  const normNew = newText.replace(/\s+/g, '');
-  // 完全一致 or 既存に含まれる場合はスキップ
-  if (normEx.includes(normNew)) return existing;
-  // 新テキストが既存を包含する場合は新テキストで置換
-  if (normNew.includes(normEx)) return newText;
-  // 文単位で重複除去
-  const existingParts = new Set(normEx.split(/[。、\n]/).filter(function(s){ return s.length > 3; }));
-  var sentences = newText.split('。');
-  var unique = [];
-  for (var i = 0; i < sentences.length; i++) {
-    var s = sentences[i].trim();
-    if (!s) continue;
-    var ns = s.replace(/\s+/g, '');
-    if (ns.length > 0 && !existingParts.has(ns) && !normEx.includes(ns)) {
-      unique.push(s + (i < sentences.length - 1 ? '。' : ''));
+function normalizeForDedupe(s) {
+  return String(s || '').replace(/[\s　]+/g, '').replace(/[、，。．・]/g, '');
+}
+function splitRecordSentences(text) {
+  var raw = String(text || '');
+  var parts = [];
+  var buf = '';
+  for (var i = 0; i < raw.length; i++) {
+    var ch = raw[i];
+    buf += ch;
+    if (/[。．！？\n]/.test(ch)) {
+      var t = buf.trim();
+      if (t) parts.push(t);
+      buf = '';
     }
   }
+  if (buf.trim()) parts.push(buf.trim());
+  return parts;
+}
+function joinRecordSentences(parts) {
+  var out = '';
+  for (var i = 0; i < parts.length; i++) {
+    var p = parts[i];
+    if (!out) out = p;
+    else if (/[。．！？\n]$/.test(out)) out += p;
+    else out += '\n' + p;
+  }
+  return out.trim();
+}
+function dedupeSentencesInText(text) {
+  var parts = splitRecordSentences(text);
+  var kept = [];
+  for (var i = 0; i < parts.length; i++) {
+    var n = normalizeForDedupe(parts[i]);
+    if (n.length < 4) { kept.push(parts[i]); continue; }
+    var dup = false;
+    for (var j = 0; j < kept.length; j++) {
+      var kn = normalizeForDedupe(kept[j]);
+      if (!kn) continue;
+      if (kn === n || kn.includes(n) || n.includes(kn)) { dup = true; break; }
+    }
+    if (!dup) kept.push(parts[i]);
+  }
+  return joinRecordSentences(kept);
+}
+function stripOverlappingSentences(text, corpusNorm) {
+  if (!text || !corpusNorm) return dedupeSentencesInText(text);
+  var parts = splitRecordSentences(text);
+  var kept = [];
+  for (var i = 0; i < parts.length; i++) {
+    var raw = parts[i];
+    var n = normalizeForDedupe(raw);
+    var core = normalizeForDedupe(raw.replace(/^【[^】]+】/, ''));
+    if (n.length >= 8 && corpusNorm.includes(n)) continue;
+    if (core.length >= 8 && corpusNorm.includes(core)) continue;
+    kept.push(raw);
+  }
+  return dedupeSentencesInText(joinRecordSentences(kept));
+}
+function dedupeNursingTextFields(fields) {
+  if (!fields || typeof fields !== 'object') return fields;
+  var keys = [
+    'medicalHistory', 'currentCondition', 'diseaseAwareness', 'familySpecialNotes',
+    'patientRequest', 'familyRequest', 'referralRequest', 'otherServices',
+    'handoverNotes', 'otherInfo'
+  ];
+  var out = Object.assign({}, fields);
+  var corpus = '';
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i];
+    var t = dedupeSentencesInText(out[key] || '');
+    if (corpus) t = stripOverlappingSentences(t, corpus);
+    out[key] = t;
+    corpus += normalizeForDedupe(t);
+  }
+  return out;
+}
+function appendText(existing, newText) {
+  if (!newText) return existing || '';
+  if (!existing) return dedupeSentencesInText(newText);
+  var normEx = normalizeForDedupe(existing);
+  var normNew = normalizeForDedupe(newText);
+  if (normNew && normEx.includes(normNew)) return existing;
+  if (normEx && normNew.includes(normEx)) return dedupeSentencesInText(newText);
+  var existingParts = new Set(splitRecordSentences(existing).map(normalizeForDedupe).filter(function(s){ return s.length > 3; }));
+  var sentences = splitRecordSentences(newText);
+  var unique = [];
+  for (var i = 0; i < sentences.length; i++) {
+    var s = sentences[i];
+    var ns = normalizeForDedupe(s);
+    if (!ns) continue;
+    if (existingParts.has(ns) || normEx.includes(ns)) continue;
+    var subsumed = false;
+    existingParts.forEach(function(ep) {
+      if (ep.includes(ns) || ns.includes(ep)) subsumed = true;
+    });
+    if (subsumed) continue;
+    unique.push(s);
+  }
   if (!unique.length) return existing;
-  return existing + '\n' + unique.join('');
+  return dedupeSentencesInText(existing + '\n' + joinRecordSentences(unique));
 }
 // ===== 認証管理 =====
 const RAILWAY = 'https://hinata-app-production.up.railway.app';
