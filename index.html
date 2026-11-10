@@ -2472,11 +2472,11 @@ function CopyableTA({ label, value, onChange, maxLength, rows=4, placeholder, ba
     React.createElement('div', { className: "space-y-1.5",}
       , React.createElement('div', { className: "flex items-center justify-between gap-2"   ,}
         , React.createElement('div', { className: "flex items-center gap-2"  ,}, React.createElement('label', { className: "text-sm font-medium text-stone-800"  ,}, label), badge&&React.createElement(FSBadge, null))
-        , maxLength&&React.createElement('span', { className: `text-xs tabular-nums ${isOver?"text-red-600 font-semibold":"text-stone-700"}`,}, value.length, "/", maxLength)
+        , maxLength&&React.createElement('span', { className: `text-xs tabular-nums ${isOver?"text-amber-700 font-semibold":"text-stone-700"}`,}, value.length, "字", isOver ? "（目安" + maxLength + "字超・可）" : " / 目安" + maxLength + "字")
       )
       , React.createElement('div', { className: "flex gap-2 items-start"  ,}
         , React.createElement('textarea', { value: value, onChange: e=>onChange(e.target.value), placeholder: placeholder, rows: rows,
-          className: `flex-1 bg-stone-700/60 border rounded-xl px-3 py-2.5 text-stone-800 text-sm placeholder-slate-500 focus:outline-none resize-y leading-relaxed ${isOver?"border-red-500":"border-stone-600 focus:border-amber-500"}`,} )
+          className: `flex-1 bg-stone-700/60 border rounded-xl px-3 py-2.5 text-stone-800 text-sm placeholder-slate-500 focus:outline-none resize-y leading-relaxed ${isOver?"border-amber-400":"border-stone-600 focus:border-amber-500"}`,} )
         , React.createElement(VoiceInline, { onText: t=>onChange(value?value+"\n"+t:t),} )
       )
       , React.createElement('button', { type: "button", onClick: copy, disabled: !value,
@@ -2976,18 +2976,18 @@ function RecordFormPage({ toast, fs, fsVersion, sharedPrescriptionPhoto, autoOcr
             , React.createElement('button', { onClick: () => { setFields(emptyRecord()); setHasExtracted(false); setTranscriptText(""); setUploadedFiles([]); }, className: "text-sm text-stone-700 border border-stone-400 px-3 py-2 rounded-lg active:scale-95"       ,}, "🔄 リセット" )
           )
           , React.createElement(SectionCard, { title: "■ 病歴・病状" ,}
-            , React.createElement(CopyableTA, { label: "既往歴及び現病歴", value: fields.medicalHistory, onChange: setF("medicalHistory"), maxLength: 360, rows: 5, placeholder: "（360字以内）", badge: hasFS&&!!fs.medicalHistory,})
-            , React.createElement(CopyableTA, { label: "病状・治療状態・処方内容", value: fields.currentCondition, onChange: setF("currentCondition"), maxLength: 440, rows: 5, placeholder: "（440字以内）", badge: hasFS&&!!fs.currentCondition,})
-            , React.createElement(CopyableTA, { label: "病識の有無/程度", value: fields.diseaseAwareness, onChange: setF("diseaseAwareness"), maxLength: 280, rows: 3, placeholder: "（280字以内）", badge: hasFS&&!!fs.diseaseAwareness,})
+            , React.createElement(CopyableTA, { label: "既往歴及び現病歴", value: fields.medicalHistory, onChange: setF("medicalHistory"), maxLength: 360, rows: 5, placeholder: "（目安360字・超えても可）", badge: hasFS&&!!fs.medicalHistory,})
+            , React.createElement(CopyableTA, { label: "病状・治療状態・処方内容", value: fields.currentCondition, onChange: setF("currentCondition"), maxLength: 440, rows: 5, placeholder: "（目安440字・超えても可）", badge: hasFS&&!!fs.currentCondition,})
+            , React.createElement(CopyableTA, { label: "病識の有無/程度", value: fields.diseaseAwareness, onChange: setF("diseaseAwareness"), maxLength: 280, rows: 3, placeholder: "（目安280字・超えても可）", badge: hasFS&&!!fs.diseaseAwareness,})
           )
           , React.createElement(SectionCard, { title: "■ 家族構成" ,}
             , React.createElement(FamilyTable, { members: fields.familyMembers, onChange: m=>setFields(p=>({...p,familyMembers:m})),})
-            , React.createElement(CopyableTA, { label: "家族構成特記事項", value: fields.familySpecialNotes, onChange: setF("familySpecialNotes"), maxLength: 280, rows: 3, placeholder: "（280字以内）", badge: hasFS&&!!fs.familySpecialNotes,})
+            , React.createElement(CopyableTA, { label: "家族構成特記事項", value: fields.familySpecialNotes, onChange: setF("familySpecialNotes"), maxLength: 280, rows: 3, placeholder: "（目安280字・超えても可）", badge: hasFS&&!!fs.familySpecialNotes,})
           )
           , React.createElement(SectionCard, { title: "■ 訪問看護の依頼目的" ,}
-            , React.createElement(CopyableTA, { label: "本人の要望", value: fields.patientRequest, onChange: setF("patientRequest"), maxLength: 273, rows: 3, placeholder: "（273字以内）", badge: hasFS&&!!fs.patientRequest,})
-            , React.createElement(CopyableTA, { label: "家族の要望", value: fields.familyRequest, onChange: setF("familyRequest"), maxLength: 273, rows: 3, placeholder: "（273字以内）", badge: hasFS&&!!fs.familyRequest,})
-            , React.createElement(CopyableTA, { label: "依頼機関の要望", value: fields.referralRequest, onChange: setF("referralRequest"), maxLength: 273, rows: 3, placeholder: "（273字以内）", badge: hasFS&&!!fs.referralRequest,})
+            , React.createElement(CopyableTA, { label: "本人の要望", value: fields.patientRequest, onChange: setF("patientRequest"), maxLength: 273, rows: 3, placeholder: "（目安273字・超えても可）", badge: hasFS&&!!fs.patientRequest,})
+            , React.createElement(CopyableTA, { label: "家族の要望", value: fields.familyRequest, onChange: setF("familyRequest"), maxLength: 273, rows: 3, placeholder: "（目安273字・超えても可）", badge: hasFS&&!!fs.familyRequest,})
+            , React.createElement(CopyableTA, { label: "依頼機関の要望", value: fields.referralRequest, onChange: setF("referralRequest"), maxLength: 273, rows: 3, placeholder: "（目安273字・超えても可）", badge: hasFS&&!!fs.referralRequest,})
           )
           , React.createElement(SectionCard, { title: "■ ADLの状況" ,}
             , [["食生活","adlEating"],["清潔","adlHygiene"],["排泄","adlToileting"],["睡眠","adlSleep"],["生活のリズム","adlDailyRhythm"],["服薬状況","adlMedication"],["金銭管理","adlFinance"],["デイケア・作業所","adlDayCare"],["対人関係","adlInterpersonal"],["看護師とのコミュニケーション","adlNurseComm"]].map(([lbl,key])=>(
@@ -3002,8 +3002,8 @@ function RecordFormPage({ toast, fs, fsVersion, sharedPrescriptionPhoto, autoOcr
             , React.createElement(InstTable, { institutions: fields.relatedInstitutions, onChange: v=>setFields(p=>({...p,relatedInstitutions:v})),})
           )
           , React.createElement(SectionCard, { title: "■ その他・申し送り" ,}
-            , React.createElement(CopyableTA, { label: "その他サービスの利用状況", value: fields.otherServices, onChange: setF("otherServices"), maxLength: 320, rows: 4, placeholder: "（320字以内）", badge: hasFS&&!!fs.otherServices,})
-            , React.createElement(CopyableTA, { label: "スタッフへの申し送り事項", value: fields.handoverNotes, onChange: setF("handoverNotes"), maxLength: 800, rows: 8, placeholder: "（800字以内）", badge: hasFS&&!!fs.handoverNotes,})
+            , React.createElement(CopyableTA, { label: "その他サービスの利用状況", value: fields.otherServices, onChange: setF("otherServices"), maxLength: 320, rows: 4, placeholder: "（目安320字・超えても可）", badge: hasFS&&!!fs.otherServices,})
+            , React.createElement(CopyableTA, { label: "スタッフへの申し送り事項", value: fields.handoverNotes, onChange: setF("handoverNotes"), maxLength: 800, rows: 8, placeholder: "（目安800字・超えても可）", badge: hasFS&&!!fs.handoverNotes,})
           )
           , React.createElement(SectionCard, { title: "■ その他の情報（FSからの補足）" ,}
             , React.createElement('p', { className: "text-sm text-stone-600 mb-2" }, "依頼元・緊急連絡先・主治医・支援者など、上記各項目に入りきらなかった情報が自動でここに入ります。"),
@@ -4135,14 +4135,15 @@ function assignPhones(num1, num2) {
 
 // FSの追記ヘルパー：既存データの下に新情報を追記（重複除去）
 function appendText(existing, newText, maxLen) {
+  // maxLen は目安表示用のため切り詰めない（全情報を保持）。未指定時もそのまま結合。
   if (!newText) return existing;
-  if (!existing) return newText.slice(0, maxLen);
+  if (!existing) return newText;
   const normEx = existing.replace(/\s+/g, '');
   const normNew = newText.replace(/\s+/g, '');
   // 完全一致 or 既存に含まれる場合はスキップ
   if (normEx.includes(normNew)) return existing;
   // 新テキストが既存を包含する場合は新テキストで置換
-  if (normNew.includes(normEx)) return newText.slice(0, maxLen);
+  if (normNew.includes(normEx)) return newText;
   // 文単位で重複除去
   const existingParts = new Set(normEx.split(/[。、\n]/).filter(function(s){ return s.length > 3; }));
   var sentences = newText.split('。');
@@ -4156,7 +4157,7 @@ function appendText(existing, newText, maxLen) {
     }
   }
   if (!unique.length) return existing;
-  return (existing + '\n' + unique.join('')).slice(0, maxLen);
+  return existing + '\n' + unique.join('');
 }
 // ===== 認証管理 =====
 const RAILWAY = 'https://hinata-app-production.up.railway.app';
